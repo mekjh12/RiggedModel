@@ -19,7 +19,11 @@ namespace LSystem
         private Action<int> _update;
         private Action<int> _render;
 
-        public Camera Camera => _camera;
+        public Camera Camera
+        {
+            get => _camera;
+            set => _camera = value;
+        }
 
         public int Width => _width;
         
@@ -55,11 +59,7 @@ namespace LSystem
 
         public void Update(int deltaTime)
         {
-            if (_camera == null)
-            {
-                _camera = new FpsCamera("fpsCam", -13, -1.5f, 3, 0, 0);
-                _camera.Init(_width, _height);
-            }
+            if (_camera == null) _camera.Init(_width, _height);
 
             KeyCheck(deltaTime);
             _camera.Update(deltaTime);

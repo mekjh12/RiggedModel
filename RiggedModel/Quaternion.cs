@@ -294,6 +294,16 @@ namespace LSystem
             return result;
         }
 
+        public Quaternion Interpolate(Quaternion q2, float progression)
+        {
+            // 클래스를 정비할 필요가 있음.
+            System.Numerics.Quaternion p 
+                = new System.Numerics.Quaternion((float)_Vector.x, (float)_Vector.y, (float)_Vector.z, (float)_CosAngle);
+            System.Numerics.Quaternion q = new System.Numerics.Quaternion(q2.X, q2.Y, q2.Z, q2.W);
+            System.Numerics.Quaternion r = System.Numerics.Quaternion.Slerp(p, q, progression);
+            return new Quaternion(r.X, r.Y, r.Z, r.W);
+        }
+
         public override string ToString()
         {
             return $"Axis: {RotationVector} Angle: {RotationAngle} (X{_Vector.x},Y{_Vector.y},Z{_Vector.z},W{_CosAngle})";

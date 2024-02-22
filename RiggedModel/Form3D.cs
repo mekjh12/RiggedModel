@@ -1,6 +1,7 @@
 ﻿using OpenGL;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Windows.Forms;
 using System.Windows.Input;
 
@@ -11,6 +12,10 @@ namespace LSystem
         EngineLoop _gameLoop;
         List<Entity> entities;
         StaticShader _shader;
+        AnimateShader _ashader;
+        AnimatedModel _animatedModel;
+        ModelDae daeModel1;
+        PolygonMode _polygonMode = PolygonMode.Fill;
 
         public Form3D()
         {
@@ -20,38 +25,49 @@ namespace LSystem
         private void Form3D_Load(object sender, EventArgs e)
         {
             // ### 초기화 ###
+            IniFile.SetFileName("setup.ini");
+
+            // ### 초기화 ###
             _gameLoop = new EngineLoop();
             _shader = new StaticShader();
+            _ashader = new AnimateShader();
             entities = new List<Entity>();
 
-            Texture texture = new Texture(EngineLoop.PROJECT_PATH + @"\Res\bricks.jpg");
-            TexturedModel texturedModel = new TexturedModel(Loader3d.LoadCube(), texture);
-            for (int i = -2; i < 2; i++)
-            {
-                for (int j = -2; j < 2; j++)
-                {
-                    Entity ent = new Entity(texturedModel);
-                    ent.Position = new Vertex3f(3 * i, 3 * j, 0);
-                    ent.Material = Material.White;
-                    ent.IsAxisVisible = true;
-                    entities.Add(ent);
-                }
-            }
+            string fileName = EngineLoop.PROJECT_PATH + "\\Res\\test.dae";
+            daeModel1 = new ModelDae(fileName);
+            Entity daeEntity = new Entity(daeModel1.Model);
+            daeEntity.Material = new Material();
+            daeEntity.Position = new Vertex3f(0, 0, 0);
+            daeEntity.Scaled(1, 1, 1);
+            _animatedModel = new AnimatedModel(daeEntity, daeModel1.RootBone, daeModel1.BoneCount);
+            _animatedModel.DoAnimation(daeModel1.Animation);
+            entities.Add(daeEntity);
+
+            // 카메라 설정
+            float cx = float.Parse(IniFile.GetPrivateProfileString("camera", "x", "0.0"));
+            float cy = float.Parse(IniFile.GetPrivateProfileString("camera", "y", "0.0"));
+            float cz = float.Parse(IniFile.GetPrivateProfileString("camera", "z", "0.0"));
+            float yaw = float.Parse(IniFile.GetPrivateProfileString("camera", "yaw", "0.0"));
+            float pitch = float.Parse(IniFile.GetPrivateProfileString("camera", "pitch", "0.0"));
+            _gameLoop.Camera = new FpsCamera("", cx, cy, cz, yaw, pitch);
 
             // ### 주요로직 ###
             _gameLoop.UpdateFrame = (deltaTime) =>
             {
+                float milliSecond = deltaTime * 0.001f;
                 int w = this.glControl1.Width;
                 int h = this.glControl1.Height;
+
                 if (_gameLoop.Width * _gameLoop.Height == 0)
                 {
                     _gameLoop.Init(w, h);
                     _gameLoop.Camera.Init(w, h);
                 }
 
-                float milliSecond = deltaTime * 0.001f;
+                Entity entity = entities.Count > 0 ? entities[0] : null;
+                _animatedModel.Update(deltaTime);
+                Console.WriteLine(_animatedModel.AnimationTime);
 
-                Entity entity = entities[0];
                 if (Keyboard.IsKeyDown(Key.D1)) entity.Roll(1);
                 if (Keyboard.IsKeyDown(Key.D2)) entity.Roll(-1);
                 if (Keyboard.IsKeyDown(Key.D3)) entity.Yaw(1);
@@ -78,10 +94,13 @@ namespace LSystem
                 Gl.BlendEquation(BlendEquationMode.FuncAdd);
                 Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
+                Gl.PolygonMode(MaterialFace.FrontAndBack, _polygonMode);
                 foreach (Entity entity in entities)
                 {
                     Renderer.Render(_shader, entity, camera);
                 }
+
+                Renderer.RenderAxis(_shader, camera);
             };
         }
 
@@ -124,13 +143,20 @@ namespace LSystem
             if (e.KeyCode == Keys.Escape)
             {
                 if (MessageBox.Show("정말로 끝내시겠습니까?", "종료", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                {
+                { 
+                    // 종료 설정 저장
+                    IniFile.WritePrivateProfileString("camera", "x", _gameLoop.Camera.Position.x);
+                    IniFile.WritePrivateProfileString("camera", "y", _gameLoop.Camera.Position.y);
+                    IniFile.WritePrivateProfileString("camera", "z", _gameLoop.Camera.Position.z);
+                    IniFile.WritePrivateProfileString("camera", "yaw", _gameLoop.Camera.CameraYaw);
+                    IniFile.WritePrivateProfileString("camera", "pitch", _gameLoop.Camera.CameraPitch);
                     Application.Exit();
                 }
             }
-            else if (e.KeyCode == Keys.W)
+            else if (e.KeyCode == Keys.F)
             {
-                
+                _polygonMode = (_polygonMode == PolygonMode.Fill) ?
+                    PolygonMode.Line : PolygonMode.Fill;
             }
         }
     }

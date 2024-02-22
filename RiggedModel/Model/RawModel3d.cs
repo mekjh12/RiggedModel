@@ -14,7 +14,11 @@ namespace LSystem
 
         Vertex3f[] _vertices;
 
-        public bool IsDrawElement => _isDrawElement;
+        public bool IsDrawElement
+        {
+            get => _isDrawElement;
+            set => _isDrawElement = value;
+        }
 
         public Vertex3f[] Vertices => _vertices;
 
