@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -63,6 +64,28 @@ namespace LSystem
             mat[1, 1] = scale.y;
             mat[2, 2] = scale.z;
             return mat;
+        }
+
+        public static Matrix4x4f ToMatrix4x4f(this Assimp.Matrix4x4 mat)  
+        {
+            Matrix4x4f m = Matrix4x4f.Identity;
+            m[0, 0] = mat.A1;
+            m[1, 0] = mat.A2;
+            m[2, 0] = mat.A3;
+            m[3, 0] = mat.A4;
+            m[0, 1] = mat.B1;
+            m[1, 1] = mat.B2;
+            m[2, 1] = mat.B3;
+            m[3, 1] = mat.B4;
+            m[0, 2] = mat.C1;
+            m[1, 2] = mat.C2;
+            m[2, 2] = mat.C3;
+            m[3, 2] = mat.C4;
+            m[0, 3] = mat.D1;
+            m[1, 3] = mat.D2;
+            m[2, 3] = mat.D3;
+            m[3, 3] = mat.D4;
+            return m;
         }
 
         public static Matrix4x4f CreateViewMatrix(Vertex3f pos, Vertex3f right, Vertex3f up, Vertex3f forward)

@@ -24,7 +24,7 @@ namespace LSystem
         {
             UniformLocations("model", "view", "proj");
             UniformLocations("modelTexture");
-            UniformLocations("color", "isTextured");
+            UniformLocations("color", "isTextured", "isAttribColored");
         }
 
         public void LoadTexture(string textureUniformName, TextureUnit textureUnit, uint texture)
@@ -52,6 +52,11 @@ namespace LSystem
         public void LoadObjectColor(Vertex4f color)
         {
             base.LoadVector(_location["color"], color);
+        }
+
+        public void LoadIsAtrribColor(bool isAttribColored)
+        {
+            base.LoadBoolean(_location["isAttribColored"], isAttribColored);
         }
 
         public void LoadIsTextured(bool isTextured)

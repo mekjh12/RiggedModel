@@ -4,6 +4,7 @@ in vec4 fcolor;
 
 uniform sampler2D modelTexture;
 uniform bool isTextured;
+uniform bool isAttribColored;
 uniform vec4 color;
 
 out vec4 out_Color;
@@ -12,5 +13,8 @@ void main(void)
 {
     vec4 textureColor4 = texture(modelTexture, texCoords);
     if (textureColor4.a < 0.05f) discard;
-    out_Color = isTextured ? color * textureColor4 : color;    
+    out_Color = isTextured ? color * textureColor4 : color;
+
+    if (isAttribColored) out_Color = fcolor;
 }
+

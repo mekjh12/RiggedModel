@@ -7,12 +7,11 @@ namespace LSystem
         private static int MAX_JOINTS = 50;
         const string VERTEX_FILE = @"\Shader\ani.vert";
         const string FRAGMENT_FILE = @"\Shader\ani.frag";
-        const string GEOMETRY_FILE = @"\Shader\ani.geom";
-        private int[] loc_boneMatrix;
+        //const string GEOMETRY_FILE = @"\Shader\ani.geom";
 
         public AnimateShader() : base(EngineLoop.PROJECT_PATH + VERTEX_FILE,
             EngineLoop.PROJECT_PATH + FRAGMENT_FILE, 
-            EngineLoop.PROJECT_PATH + GEOMETRY_FILE)
+            "") //EngineLoop.PROJECT_PATH + GEOMETRY_FILE
         {
 
         }
@@ -30,12 +29,10 @@ namespace LSystem
         {
             UniformLocations("model", "view", "proj");
             UniformLocations("lightDirection");
+            UniformLocations("diffuseMap");
 
-            loc_boneMatrix = new int[MAX_JOINTS];
             for (int i = 0; i < MAX_JOINTS; i++)
-            {
-                loc_boneMatrix[i] = base.GetUniformLocation($"jointTransforms[{i}]");
-            }
+                UniformLocation($"jointTransforms[{i}]");
         }
 
         public void LoadTexture(string textureUniformName, TextureUnit textureUnit, uint texture)
@@ -47,7 +44,7 @@ namespace LSystem
 
         public void PushBoneMatrix(int index, Matrix4x4f matrix)
         {
-            base.LoadMatrix(_location["bone" + index], matrix);
+            base.LoadMatrix(_location[$"jointTransforms[{index}]"], matrix);
         }
 
         public void LoadProjMatrix(Matrix4x4f matrix)

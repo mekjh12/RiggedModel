@@ -1,4 +1,5 @@
-﻿using OpenGL;
+﻿using System;
+using OpenGL;
 
 namespace LSystem
 {
@@ -9,6 +10,45 @@ namespace LSystem
         public static RawModel3d Cone = Loader3d.LoadCone(4, 1.0f, 3.0f, false);
         public static RawModel3d Sphere = Loader3d.LoadSphere(r: 1, piece: 6);
         public static RawModel3d Rect = Loader3d.LoadPlane();
+        public static RawModel3d Axis = Loader3d.LoadAxis(1);
+
+        public static void RenderLocalAxis(StaticShader shader, Camera camera, float size, Matrix4x4f? localModel = null,  bool isDepthTest = false)
+        {
+            if (localModel == null) localModel = Matrix4x4f.Identity;
+
+            if (isDepthTest)
+                Gl.Enable(EnableCap.DepthTest);
+            else
+                Gl.Disable(EnableCap.DepthTest);
+
+            shader.Bind();
+
+            shader.LoadProjMatrix(camera.ProjectiveMatrix);
+            shader.LoadViewMatrix(camera.ViewMatrix);
+            shader.LoadIsTextured(false);
+            shader.LoadIsAtrribColor(true);
+
+            Gl.BindVertexArray(Axis.VAO);
+            Gl.EnableVertexAttribArray(0);
+            Gl.EnableVertexAttribArray(2);
+
+            // positive axis
+            Gl.LineWidth(1.0f);
+            shader.LoadModelMatrix((Matrix4x4f)localModel);
+            Gl.DrawArrays(PrimitiveType.Lines, 0, 6);
+
+            Gl.DisableVertexAttribArray(2);
+            Gl.DisableVertexAttribArray(0);
+            Gl.BindVertexArray(0);
+
+            shader.LoadIsAtrribColor(false);
+            shader.Unbind();
+
+            if (isDepthTest)
+                Gl.Disable(EnableCap.DepthTest);
+            else
+                Gl.Enable(EnableCap.DepthTest);
+        }
 
         public static void RenderAxis(StaticShader shader, Camera camera)
         {
@@ -64,18 +104,16 @@ namespace LSystem
 
         }
 
-        public void Render(AnimateShader shader, Matrix4x4f[] jointTransforms, Entity entity, Camera camera)
+        public static void Render(AnimateShader shader, Matrix4x4f[] jointTransforms, Matrix4x4f rootMatrix, Entity entity, Camera camera)
         {
             shader.Bind();
 
-            shader.LoadModelMatrix(entity.ModelMatrix);
+            shader.LoadModelMatrix(entity.ModelMatrix * rootMatrix);
             shader.LoadViewMatrix(camera.ViewMatrix);
             shader.LoadProjMatrix(camera.ProjectiveMatrix);
 
             for (int i = 0; i < jointTransforms.Length; i++)
-            {
                 shader.PushBoneMatrix(i, jointTransforms[i]);
-            }
 
             Gl.BindVertexArray(entity.Model.VAO);
             Gl.EnableVertexAttribArray(0);
@@ -85,13 +123,11 @@ namespace LSystem
             Gl.EnableVertexAttribArray(4);
 
             TexturedModel modelTextured = (TexturedModel)(entity.Model);
-
-            if (modelTextured.Texture != null)
-            {
+           
+            if (entity.IsTextured)
                 shader.LoadTexture("diffuseMap", TextureUnit.Texture0, modelTextured.Texture.TextureID);
-            }
 
-            Gl.DrawArrays(PrimitiveType.Triangles, 0, entity.Model.VertexCount);
+            Gl.DrawElements(PrimitiveType.Triangles, entity.Model.VertexCount, DrawElementsType.UnsignedInt, System.IntPtr.Zero);
 
             Gl.DisableVertexAttribArray(0);
             Gl.DisableVertexAttribArray(1);
@@ -141,6 +177,8 @@ namespace LSystem
 
             if (entity.IsAxisVisible)
             {
+                Gl.LineWidth(5.0f);
+
                 Gl.BindVertexArray(Renderer.Line.VAO);
                 Gl.EnableVertexAttribArray(0);
                 shader.LoadIsTextured(false);
@@ -148,19 +186,21 @@ namespace LSystem
                 shader.LoadViewMatrix(camera.ViewMatrix);
 
                 shader.LoadObjectColor(new Vertex4f(1, 0, 0, 1));
-                shader.LoadModelMatrix(entity.ModelMatrix * Matrix4x4f.Scaled(3, 3, 3));
+                shader.LoadModelMatrix(entity.ModelMatrix * Matrix4x4f.Scaled(5, 5, 5));
                 Gl.DrawArrays(PrimitiveType.Lines, 0, 2);
 
                 shader.LoadObjectColor(new Vertex4f(0, 1, 0, 1));
-                shader.LoadModelMatrix(entity.ModelMatrix * Matrix4x4f.RotatedZ(90) * Matrix4x4f.Scaled(3, 3, 3));
+                shader.LoadModelMatrix(entity.ModelMatrix * Matrix4x4f.RotatedZ(90) * Matrix4x4f.Scaled(5, 5, 5));
                 Gl.DrawArrays(PrimitiveType.Lines, 0, 2);
 
                 shader.LoadObjectColor(new Vertex4f(0, 0, 1, 1));
-                shader.LoadModelMatrix(entity.ModelMatrix * Matrix4x4f.RotatedY(-90) * Matrix4x4f.Scaled(3, 3, 3));
+                shader.LoadModelMatrix(entity.ModelMatrix * Matrix4x4f.RotatedY(-90) * Matrix4x4f.Scaled(5, 5, 5));
                 Gl.DrawArrays(PrimitiveType.Lines, 0, 2);
 
                 Gl.DisableVertexAttribArray(0);
                 Gl.BindVertexArray(0);
+
+                Gl.LineWidth(1.0f);
             }
 
             shader.Unbind();

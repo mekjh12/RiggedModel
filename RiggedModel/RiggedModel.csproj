@@ -85,7 +85,7 @@
     <Reference Include="WindowsBase, Version=4.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Animate\AnimatedModel.cs" />
+    <Compile Include="Animate\AniModel.cs" />
     <Compile Include="Animate\Animation.cs" />
     <Compile Include="Animate\Animator.cs" />
     <Compile Include="Animate\AniPose.cs" />
@@ -154,7 +154,6 @@
     </Compile>
     <None Include="setup.ini" />
     <None Include="Shader\ani.frag" />
-    <None Include="Shader\ani.geom" />
     <None Include="Shader\ani.vert" />
     <None Include="Shader\static.frag" />
     <None Include="Shader\static.vert" />

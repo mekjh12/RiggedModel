@@ -41,6 +41,15 @@ namespace LSystem
             _scaling = new Vertex3f((float)scaling.X, (float)scaling.Y, (float)scaling.Z);
         }
 
+        public override string ToString()
+        {
+            string txt = "";
+            txt += " scale=" + _scaling.ToString();
+            txt += " pos=" + _position.ToString();
+            txt += " rot=" + _rotation.ToString();
+            return txt;
+        }
+
         public JointTransform()
         {
             throw new System.NotImplementedException();
@@ -53,7 +62,7 @@ namespace LSystem
                 Matrix4x4f T = Matrix4x4f.Translated(_position.x, _position.y, _position.z);
                 Matrix4x4f R = (Matrix4x4f)_rotation;
                 Matrix4x4f S = Matrix4x4f.Scaled(_scaling.x, _scaling.y, _scaling.z);
-                return S * R * T;
+                return T * R * S;
             }
         }
 
@@ -66,10 +75,7 @@ namespace LSystem
 
         private static Vertex3f InterpolateLerp(Vertex3f start, Vertex3f end, float progression)
         {
-            float x = start.x + (end.x - start.x) * progression;
-            float y = start.y + (end.y - start.y) * progression;
-            float z = start.z + (end.z - start.z) * progression;
-            return new Vertex3f(x, y, z);
+            return start + (end - start) * progression;
         }
 
     }

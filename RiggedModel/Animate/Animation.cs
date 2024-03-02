@@ -5,42 +5,41 @@ namespace LSystem
 {
     public class Animation
     {
-        private string _name;
+        private string _animationName;
         private float _length;
         private Dictionary<float, KeyFrame> _keyframes;
 
-        public Animation(string name, float lengthInSeconds)
-        {
-            _name = name;
-            _length = lengthInSeconds;
-            _keyframes = new Dictionary<float, KeyFrame>();
-        }
-
-        public KeyFrame FirstKeyFrame
-        {
-            get=> (_keyframes.Values.Count > 0) ? _keyframes.Values.ElementAt(0) : null;
-        }
+        public KeyFrame FirstKeyFrame => (_keyframes.Values.Count > 0) ? _keyframes.Values.ElementAt(0) : null;
 
         public float Length => _length;
 
-        public string Name => _name;
+        public string Name => _animationName;
 
         public int KeyFrameCount => _keyframes.Count;
+
+        public Animation(string name, float lengthInSeconds)
+        {
+            _animationName = name;
+            _length = lengthInSeconds;
+            _keyframes = new Dictionary<float, KeyFrame>();
+        }
 
         public KeyFrame this[float time]
         {
             get
             {
-                if (!_keyframes.ContainsKey(time))
-                {
-                    return FirstKeyFrame;
-                }
-                else
+                if (_keyframes.ContainsKey(time))
                 {
                     return (_keyframes.Values.Count > 0) ? _keyframes[time] : null;
                 }
+                else
+                {
+                    return FirstKeyFrame;
+                }
             }
         }
+
+        public KeyFrame FirstFrame => _keyframes.Values.ElementAt(0);
 
         public KeyFrame Frame(int index)
         {
@@ -52,14 +51,6 @@ namespace LSystem
             if (!_keyframes.ContainsKey(time))
             {
                 _keyframes[time] = new KeyFrame(time);
-            }
-        }
-
-        public void AddKeyFrames(float[] times)
-        {
-            for (int i = 0; i < times.Length; i++)
-            {
-                AddKeyFrame(times[i]);
             }
         }
 

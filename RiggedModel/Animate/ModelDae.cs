@@ -15,6 +15,9 @@ namespace LSystem
         Dictionary<string, int>_jointIds = new Dictionary<string, int>();
         Dictionary<int, int> _skeletonHierarchy = new Dictionary<int, int>(); // 자식key-> 부모value
         Animation _animation;
+        Matrix4x4f _rootMatrix4x4;
+
+        public Matrix4x4f RootMatrix4x4 => _rootMatrix4x4;
 
         struct BoneWeight
         {
@@ -69,8 +72,7 @@ namespace LSystem
             Assimp.Scene scene;
             Assimp.AssimpContext importer = new Assimp.AssimpContext();
             importer.SetConfig(new Assimp.Configs.NormalSmoothingAngleConfig(66.0f));
-            scene = importer.ImportFile(filename, Assimp.PostProcessSteps.Triangulate |
-                                                    Assimp.PostProcessSteps.FlipUVs);
+            scene = importer.ImportFile(filename, PostProcessSteps.Triangulate | PostProcessSteps.FlipUVs);
 
             if (scene == null || scene.RootNode == null)
             {
@@ -80,13 +82,16 @@ namespace LSystem
 
             _directory = Path.GetDirectoryName(filename);
 
-            // (1) 모델을 로드한다. boneOffsetMatrices을 로드한다.
+            // (1) 모델을 로드한다.
+            //   1-1. position, texcoord, normal, boneIndex, boneWeight
+            //   1-2. Faces Index
+            //   1-3. boneOffsetMatrices을 로드한다.
             Stack<Node> stack = new Stack<Node>();
             stack.Push(scene.RootNode);
+            _rootMatrix4x4 = scene.RootNode.Transform.ToMatrix4x4f();
             while (stack.Count > 0)
             {
                 Node node = stack.Pop();
-                //Console.WriteLine($"Node 정보 {node.Name} mesh count={node.MeshCount}");
                 for (int i = 0; i < node.MeshCount; i++)
                 {
                     Mesh mesh = scene.Meshes[node.MeshIndices[i]];
@@ -115,7 +120,6 @@ namespace LSystem
             // (3) 루트본으로부터 계층적 조인트를 읽어온다.
             Stack<int> jStack = new Stack<int>();
             Dictionary<int, Joint> dicJoint = new Dictionary<int, Joint>();
-
             jStack.Push(0);
             while (jStack.Count > 0)
             {
@@ -125,7 +129,7 @@ namespace LSystem
                     if (item.Value == jointId) { jointName = item.Key; break; }
                 int parentId = _skeletonHierarchy[jointId];
 
-                Joint joint = new Joint(jointName, jointId, _boneOffsetMatrices[jointId]);
+                Joint joint = new Joint(jointName, jointId, _boneOffsetMatrices[jointId].Inverse);
                 dicJoint.Add(jointId, joint);
 
                 if (dicJoint.ContainsKey(parentId))
@@ -145,19 +149,24 @@ namespace LSystem
                 for (int i = 0; i < childs.Count; i++) jStack.Push(childs[i]); // input stack
             }
 
-            // 바인딩 행렬을 읽어온다.
+            // (4) 조인트의 바인딩 행렬을 읽어온다.
             Stack<Joint> j = new Stack<Joint>();
             j.Push(_rootJoint);
             while (j.Count > 0)
             {
                 Joint joint = j.Pop();
-                Console.WriteLine(joint.ToString());
+                joint.InverseBindTransform = _boneOffsetMatrices[joint.Index];
+
+                Matrix4x4f Mc = joint.InverseBindTransform;
+                int parentIndex = _skeletonHierarchy[joint.Index];
+                Matrix4x4f Mp = parentIndex < 0 ? Matrix4x4f.Identity : _boneOffsetMatrices[parentIndex];
+                //joint.BindTransform = Mp * Mc.Inverse;
+
                 for (int i = 0; i < joint.Childrens.Count; i++) j.Push(joint.Childrens[i]);
             }
 
-            // 애니메이션들을 로딩한다.
+            // (5) 애니메이션들을 로딩한다.
             List<Assimp.Animation> animations = scene.Animations;
-
             foreach (Assimp.Animation ani in animations)
             {
                 // 애니메이션을 로드한다.
@@ -173,12 +182,11 @@ namespace LSystem
                     }
                 }
 
-                //  애니메이션이 적용된 joint를 순회한다.
+                //  애니메이션이 적용된 joint마다 순회한다.
                 foreach (NodeAnimationChannel nodeAnimationChannel in ani.NodeAnimationChannels)
                 {
+                    // joint의 시간에 따라 순회한다.
                     string jointName = nodeAnimationChannel.NodeName;
-
-                    // 특정 joint의 시간에 따라 순회한다.
                     for (int i = 0; i < nodeAnimationChannel.PositionKeyCount; i++)
                     {
                         float time = (float)nodeAnimationChannel.PositionKeys[i].Time;
@@ -188,7 +196,7 @@ namespace LSystem
                         Vector3D position = nodeAnimationChannel.PositionKeys[i].Value;
                         Vector3D scale = nodeAnimationChannel.ScalingKeys[i].Value;
                         JointTransform jointTransform = new JointTransform(position, quaternion, scale);
-                        _animation[time].AddJointTransform(jointName, jointTransform);
+                        _animation[time][jointName] = jointTransform;
                     }
                 }
             }
@@ -234,9 +242,16 @@ namespace LSystem
                 else
                 {
                     // 로드한 적이 없음
-                    Texture texture = new Texture(filename);
-                    textures.Add(texture);
-                    TextureStorage.TexturesLoaded.Add(filename, texture);
+                    if (File.Exists(filename))
+                    {
+                        Texture texture = new Texture(filename);
+                        textures.Add(texture);
+                        TextureStorage.TexturesLoaded.Add(filename, texture);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"텍스처 파일이 누락되었습니다. {filename}");
+                    }
                 }
             }
 
@@ -392,7 +407,7 @@ namespace LSystem
                 weightList[i] = new List<BoneWeight>();
             }
 
-            // Bone의 이름에서 int로 저장
+            // Bone Name을 int로 지정하고 딕셔너리로 저장
             int index = 0;
             foreach (Bone bone in mesh.Bones)
             {
@@ -403,7 +418,8 @@ namespace LSystem
             foreach (Bone bone in mesh.Bones)
             {
                 int boneIndex = boneID[bone.Name];
-                _boneOffsetMatrices[boneIndex] = ToMatrix4x4f(bone.OffsetMatrix);
+                _boneOffsetMatrices.Add(boneIndex, ToMatrix4x4f(bone.OffsetMatrix));
+                Console.WriteLine(_boneOffsetMatrices[boneIndex].Inverse);
                 foreach (VertexWeight weight in bone.VertexWeights)
                 {
                     BoneWeight boneWeight;

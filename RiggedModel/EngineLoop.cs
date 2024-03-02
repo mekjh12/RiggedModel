@@ -53,7 +53,7 @@ namespace LSystem
             _width = width;
             _height = height;
 
-            ShowCursor(false);
+            ShowCursor(true);
             Gl.Viewport(0, 0, _width, _height);
         }
 

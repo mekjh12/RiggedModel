@@ -5,45 +5,20 @@ namespace LSystem
 {
     public class AniPose
     {
-        private Dictionary<string, JointTransform> pose;
+        Dictionary<string, JointTransform> _pose;
 
         public AniPose()
         {
-            this.pose = new Dictionary<string, JointTransform>();
-        }
-
-        public JointTransform GetJointTransform(int index)
-        {
-            int num = 0;
-            foreach (KeyValuePair<string, JointTransform> item in pose)
-            {
-                if (index == num) return item.Value;
-                num++;
-            }
-            return null;
+            _pose = new Dictionary<string, JointTransform>();
         }
 
         public JointTransform this[string jointName]
         {
-            get
-            {
-                return pose[jointName];
-            }
-
-            set
-            {
-                pose[jointName] = value;
-            }
+            get => _pose[jointName];
+            set => _pose[jointName] = value;
         }
 
-        public string[] JointNames
-        {
-            get
-            {
-                return pose.Keys.ToArray();
-            }
-        }
-
+        public string[] JointNames => _pose.Keys.ToArray();
 
     }
 }

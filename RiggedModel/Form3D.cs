@@ -1,9 +1,9 @@
 ﻿using OpenGL;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Windows.Forms;
 using System.Windows.Input;
+using static Assimp.Metadata;
 
 namespace LSystem
 {
@@ -13,7 +13,7 @@ namespace LSystem
         List<Entity> entities;
         StaticShader _shader;
         AnimateShader _ashader;
-        AnimatedModel _animatedModel;
+        AniModel _animatedModel;
         ModelDae daeModel1;
         PolygonMode _polygonMode = PolygonMode.Fill;
 
@@ -33,15 +33,17 @@ namespace LSystem
             _ashader = new AnimateShader();
             entities = new List<Entity>();
 
+            //string fileName = EngineLoop.PROJECT_PATH + "\\Res\\CharacterRunning.dae";
             string fileName = EngineLoop.PROJECT_PATH + "\\Res\\test.dae";
             daeModel1 = new ModelDae(fileName);
             Entity daeEntity = new Entity(daeModel1.Model);
             daeEntity.Material = new Material();
             daeEntity.Position = new Vertex3f(0, 0, 0);
             daeEntity.Scaled(1, 1, 1);
-            _animatedModel = new AnimatedModel(daeEntity, daeModel1.RootBone, daeModel1.BoneCount);
+            daeEntity.IsAxisVisible = true;
+            _animatedModel = new AniModel(daeEntity, daeModel1.RootBone, daeModel1.BoneCount, daeModel1.RootMatrix4x4);
             _animatedModel.DoAnimation(daeModel1.Animation);
-            entities.Add(daeEntity);
+            //entities.Add(daeEntity);
 
             // 카메라 설정
             float cx = float.Parse(IniFile.GetPrivateProfileString("camera", "x", "0.0"));
@@ -66,7 +68,6 @@ namespace LSystem
 
                 Entity entity = entities.Count > 0 ? entities[0] : null;
                 _animatedModel.Update(deltaTime);
-                Console.WriteLine(_animatedModel.AnimationTime);
 
                 if (Keyboard.IsKeyDown(Key.D1)) entity.Roll(1);
                 if (Keyboard.IsKeyDown(Key.D2)) entity.Roll(-1);
@@ -97,10 +98,16 @@ namespace LSystem
                 Gl.PolygonMode(MaterialFace.FrontAndBack, _polygonMode);
                 foreach (Entity entity in entities)
                 {
-                    Renderer.Render(_shader, entity, camera);
+                    //Renderer.Render(_shader, entity, camera);
                 }
+                Renderer.Render(_ashader, _animatedModel.JointTransforms, _animatedModel.RootMatrix4x4f, _animatedModel.ModelEntity, camera);
 
                 Renderer.RenderAxis(_shader, camera);
+
+                foreach (Matrix4x4f jointTransform in _animatedModel.BindPoseTransform)
+                {
+                    Renderer.RenderLocalAxis(_shader, camera, 1, jointTransform);
+                }
             };
         }
 
@@ -157,6 +164,10 @@ namespace LSystem
             {
                 _polygonMode = (_polygonMode == PolygonMode.Fill) ?
                     PolygonMode.Line : PolygonMode.Fill;
+            }
+            else if (e.KeyCode == Keys.Space)
+            {
+                _animatedModel.Animator.Toggle();
             }
         }
     }

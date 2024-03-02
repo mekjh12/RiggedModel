@@ -306,7 +306,10 @@ namespace LSystem
 
         public override string ToString()
         {
-            return $"Axis: {RotationVector} Angle: {RotationAngle} (X{_Vector.x},Y{_Vector.y},Z{_Vector.z},W{_CosAngle})";
+            float x = (float)((_Vector.x < 0.000001f) ? 0.0f : _Vector.x);
+            float y = (float)((_Vector.y < 0.000001f) ? 0.0f : _Vector.y);
+            float z = (float)((_Vector.z < 0.000001f) ? 0.0f : _Vector.z);
+            return $"Angle: {RotationAngle} Axis:({x},{y},{z},{_CosAngle})";
         }
     }
 }

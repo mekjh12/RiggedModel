@@ -9,6 +9,32 @@ namespace LSystem
 {
     class Loader3d
     {
+        public static RawModel3d LoadAxis(float size)
+        {
+            float[] positions = new float[]
+            {
+                0, 0, 0, size, 0, 0,
+                0, 0, 0, 0, size, 0,
+                0, 0, 0, 0, 0, size, 
+            };
+
+            float[] colors = new float[]
+            {
+                1, 0, 0, 1, 0, 0,
+                0, 1, 0, 0, 1, 0,
+                0, 0, 1, 0, 0, 1,
+            };
+            uint vao = Gl.GenVertexArray();
+            Gl.BindVertexArray(vao);
+            uint vbo;
+            vbo = StoreDataInAttributeList(0, 3, positions);
+            vbo = StoreDataInAttributeList(2, 3, colors);
+            Gl.BindVertexArray(0);
+
+            RawModel3d rawModel = new RawModel3d(vao, positions);
+            return rawModel;
+        }
+
         public static RawModel3d LoadLine(float sx, float sy, float sz, float ex, float ey, float ez)
         {
             float[] positions = new float[] { sx, sy, sz, ex, ey, ez };

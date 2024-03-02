@@ -9,9 +9,11 @@ namespace LSystem
         private int _index;
         private string _name;
         private List<Joint> _children = new List<Joint>();
+
         private Matrix4x4f _animatedTransform = Matrix4x4f.Identity;
-        private Matrix4x4f _localBindTransform = Matrix4x4f.Identity;
+
         private Matrix4x4f _bindTransform = Matrix4x4f.Identity;
+        private Matrix4x4f _inverseBindTransform = Matrix4x4f.Identity;
 
         public int Index => _index;
 
@@ -29,16 +31,20 @@ namespace LSystem
             set => _animatedTransform = value;
         }
 
+        public Matrix4x4f InverseBindTransform
+        {
+            get => _inverseBindTransform;
+            set
+            {
+                _inverseBindTransform = value;
+                _bindTransform = _inverseBindTransform.Inverse;
+            }
+        }
+
         public Matrix4x4f BindTransform
         {
             get => _bindTransform;
             set => _bindTransform = value;
-        }
-
-        public Matrix4x4f LocalBindTransform
-        {
-            get => _localBindTransform;
-            set => _localBindTransform = value;
         }
 
         public Joint(string name, int index, Matrix4x4f bindTransform)
@@ -60,10 +66,11 @@ namespace LSystem
             for (uint i = 0; i < 4; i++)
             {
                 txt += $"{Cut(m[0, i])} {Cut(m[1, i])} {Cut(m[2, i])} {Cut(m[3, i])}" 
-                    + ((i < 3) ? "\r\n": "");
+                    + ((i < 3) ? " / ": "");
             }
+            return $"[{_index},{_name}] BindMatrix {txt}";
+
             float Cut(float a) => ((float)Math.Abs(a) < 0.000001f) ? 0.0f : a;
-            return $"[{_index},{_name}] Matrix4x4f \r\n{txt}";
         }
     }
 }
