@@ -7,32 +7,31 @@ namespace LSystem
     class AniModel
     {
         private Entity _model;
-        private Joint _rootJoint;
+        private Bone _rootJoint;
         private int _jointCount;
         private Animator _animator;
-        Matrix4x4f _rootMatrix4x4;
+        Matrix4x4f _rootBoneTransform;
 
         public Animator Animator => _animator;
 
-        public Matrix4x4f RootMatrix4x4f => _rootMatrix4x4;
+        /// <summary>
+        /// 최상위 뼈의 포즈행렬을 가져온다.
+        /// </summary>
+        public Matrix4x4f RootBoneTransform => _rootBoneTransform;
 
         public float AnimationTime => _animator.AnimationTime;
 
         public Entity ModelEntity => _model;
 
-        public Joint RootJoint
-        {
-            get =>_rootJoint;
-        }
+        public Bone RootBone => _rootJoint;
 
-        public AniModel(Entity model, Joint rootJoint, int jointCount, Matrix4x4f rootMatrix4x4)
+        public AniModel(Entity model, Bone rootJoint, int jointCount, Matrix4x4f rootBoneTransform)
         {
             _model = model;
             _rootJoint = rootJoint;
             _jointCount = jointCount;
             _animator = new Animator(this);
-            _rootMatrix4x4 = rootMatrix4x4;
-            //_rootJoint.CalcInverseBindTransform(Matrix4x4f.Identity);
+            _rootBoneTransform = rootBoneTransform;
         }
 
         public void DoAnimation(Animation animation)
@@ -42,38 +41,68 @@ namespace LSystem
 
         public void Update(int deltaTime)
         {
-            _animator.Update(0.001f * deltaTime, RootMatrix4x4f);
+            _animator.Update(0.001f * deltaTime);
         }
 
-        public Matrix4x4f[] JointTransforms
+        /// <summary>
+        /// * 캐릭터 공간에서의 애니메이션을 포즈행렬을 최종적으로 가져온다.<br/>
+        /// * v' = Ma(i) Md^-1(i) v (Ma 애니메이션행렬, Md 바이딩포즈행렬)<br/>
+        /// * 정점들을 바인딩포즈행렬을 이용하여 뼈 공간으로 정점을 변환 후, 애니메이션 행렬을 이용하여 뼈의 캐릭터 공간으로의 변환행렬을 가져온다.<br/>
+        /// </summary>
+        public Matrix4x4f[] BoneAnimationBindTransforms
         {
             get
             {
                 Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
-                Stack<Joint> stack = new Stack<Joint>();
+                Stack<Bone> stack = new Stack<Bone>();
                 stack.Push(_rootJoint);
                 while(stack.Count > 0)
                 {
-                    Joint joint = stack.Pop();
+                    Bone joint = stack.Pop();
                     jointMatrices[joint.Index] = joint.AnimatedTransform * joint.InverseBindTransform;
-                    foreach (Joint j in joint.Childrens) stack.Push(j);
+                    foreach (Bone j in joint.Childrens) stack.Push(j);
                 }
                 return jointMatrices;
             }
         }
 
-        public Matrix4x4f[] BindPoseTransform
+        /// <summary>
+        /// * 뼈들의 캐릭터 공간에서의 애니메이션 포즈행렬을 가져온다.<br/>
+        /// * 뼈들의 포즈를 렌더링하기 위하여 사용할 수 있다.<br/>
+        /// </summary>
+        public Matrix4x4f[] BoneAnimationTransforms
         {
             get
             {
                 Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
-                Stack<Joint> stack = new Stack<Joint>();
+                Stack<Bone> stack = new Stack<Bone>();
                 stack.Push(_rootJoint);
                 while (stack.Count > 0)
                 {
-                    Joint joint = stack.Pop();
-                    jointMatrices[joint.Index] = joint.InverseBindTransform.Inverse;
-                    foreach (Joint j in joint.Childrens) stack.Push(j);
+                    Bone joint = stack.Pop();
+                    jointMatrices[joint.Index] = joint.AnimatedTransform;
+                    foreach (Bone j in joint.Childrens) stack.Push(j);
+                }
+                return jointMatrices;
+            }
+        }
+
+        /// <summary>
+        /// * 초기의 캐릭터공간에서의 바인드 포즈행렬을 가져온다. <br/>
+        /// * 포즈행렬이란 한 뼈공간에서의 점의 상대적 좌표를 가져오는 행렬이다.<br/>
+        /// </summary>
+        public Matrix4x4f[] BindPoseTransforms
+        {
+            get
+            {
+                Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
+                Stack<Bone> stack = new Stack<Bone>();
+                stack.Push(_rootJoint);
+                while (stack.Count > 0)
+                {
+                    Bone bone = stack.Pop();
+                    jointMatrices[bone.Index] = bone.InverseBindTransform.Inverse;
+                    foreach (Bone j in bone.Childrens) stack.Push(j);
                 }
                 return jointMatrices;
             }

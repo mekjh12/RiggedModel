@@ -15,7 +15,9 @@ namespace LSystem
         AnimateShader _ashader;
         AniModel _animatedModel;
         ModelDae daeModel1;
+
         PolygonMode _polygonMode = PolygonMode.Fill;
+        bool _isDraged = false;
 
         public Form3D()
         {
@@ -34,7 +36,7 @@ namespace LSystem
             entities = new List<Entity>();
 
             //string fileName = EngineLoop.PROJECT_PATH + "\\Res\\CharacterRunning.dae";
-            string fileName = EngineLoop.PROJECT_PATH + "\\Res\\test.dae";
+            string fileName = EngineLoop.PROJECT_PATH + "\\Res\\guy.dae";
             daeModel1 = new ModelDae(fileName);
             Entity daeEntity = new Entity(daeModel1.Model);
             daeEntity.Material = new Material();
@@ -45,13 +47,25 @@ namespace LSystem
             _animatedModel.DoAnimation(daeModel1.Animation);
             //entities.Add(daeEntity);
 
-            // 카메라 설정
+            // 설정
             float cx = float.Parse(IniFile.GetPrivateProfileString("camera", "x", "0.0"));
             float cy = float.Parse(IniFile.GetPrivateProfileString("camera", "y", "0.0"));
             float cz = float.Parse(IniFile.GetPrivateProfileString("camera", "z", "0.0"));
             float yaw = float.Parse(IniFile.GetPrivateProfileString("camera", "yaw", "0.0"));
             float pitch = float.Parse(IniFile.GetPrivateProfileString("camera", "pitch", "0.0"));
-            _gameLoop.Camera = new FpsCamera("", cx, cy, cz, yaw, pitch);
+            float distance = float.Parse(IniFile.GetPrivateProfileString("camera", "distance", "3.0"));
+            float fov = float.Parse(IniFile.GetPrivateProfileString("camera", "fov", "90.0"));
+            bool isvisibleBone = bool.Parse(IniFile.GetPrivateProfileString("control", "isvisibleBone", "true"));
+            this.ckBoneVisible.Checked = isvisibleBone;
+            _gameLoop.Camera = new OrbitCamera("", cx, cy, cz, distance);
+            _gameLoop.Camera.CameraPitch = pitch;
+            _gameLoop.Camera.CameraYaw = yaw;
+            _gameLoop.Camera.FOV = fov;
+            this.trFov.Value = (int)fov;
+            this.lblFov.Text = $"Fov={fov}";
+            this.trTime.Maximum = (int)_animatedModel.Animator.CurrentAnimation.Length * 100;
+            this.trTime.Minimum = 0;
+
 
             // ### 주요로직 ###
             _gameLoop.UpdateFrame = (deltaTime) =>
@@ -76,8 +90,9 @@ namespace LSystem
                 if (Keyboard.IsKeyDown(Key.D5)) entity.Pitch(1);
                 if (Keyboard.IsKeyDown(Key.D6)) entity.Pitch(-1);
 
-                Camera camera = _gameLoop.Camera;
-                this.Text = $"{FramePerSecond.FPS}fps, t={FramePerSecond.GlobalTick} p={camera.Position}";
+                OrbitCamera camera = _gameLoop.Camera as OrbitCamera;
+                this.Text = $"{FramePerSecond.FPS}fps, t={FramePerSecond.GlobalTick} p={camera.Position}, distance={camera.Distance}";
+                this.trTime.Value = (int)(_animatedModel.AnimationTime * 100).Clamp(0, this.trTime.Maximum);
             };
 
             _gameLoop.RenderFrame = (deltaTime) =>
@@ -96,17 +111,20 @@ namespace LSystem
                 Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
 
                 Gl.PolygonMode(MaterialFace.FrontAndBack, _polygonMode);
-                foreach (Entity entity in entities)
-                {
-                    //Renderer.Render(_shader, entity, camera);
-                }
-                Renderer.Render(_ashader, _animatedModel.JointTransforms, _animatedModel.RootMatrix4x4f, _animatedModel.ModelEntity, camera);
-
                 Renderer.RenderAxis(_shader, camera);
 
-                foreach (Matrix4x4f jointTransform in _animatedModel.BindPoseTransform)
+                Matrix4x4f[] jointMatrix = _animatedModel.BoneAnimationBindTransforms;
+                Renderer.Render(_ashader, jointMatrix, _animatedModel.RootBoneTransform, _animatedModel.ModelEntity, camera);
+
+                foreach (Entity entity in entities)
                 {
-                    Renderer.RenderLocalAxis(_shader, camera, 1, jointTransform);
+                    Renderer.Render(_shader, entity, camera);
+                }
+
+                if (this.ckBoneVisible.Checked)
+                {
+                    foreach (Matrix4x4f jointTransform in _animatedModel.BoneAnimationTransforms)
+                        Renderer.RenderLocalAxis(_shader, camera, size: 2.2f, daeModel1.RootBindPoseMatrix * jointTransform);
                 }
             };
         }
@@ -116,16 +134,6 @@ namespace LSystem
             Camera camera = _gameLoop.Camera;
             if (camera is FpsCamera) camera?.GoForward(0.02f * e.Delta);
             if (camera is OrbitCamera) (camera as OrbitCamera)?.FarAway(-0.005f * e.Delta);
-        }
-
-        private void glControl1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
-        {
-            Mouse.CurrentPosition = new Vertex2i(e.X, e.Y);
-            Camera camera = _gameLoop.Camera;
-            Vertex2i delta = Mouse.DeltaPosition;
-            camera?.Yaw(-delta.x);
-            camera?.Pitch(-delta.y);
-            Mouse.PrevPosition = new Vertex2i(e.X, e.Y);
         }
 
         private void glControl1_Render(object sender, GlControlEventArgs e)
@@ -145,18 +153,24 @@ namespace LSystem
             FramePerSecond.Update();
         }
 
+        private void WriteEnv()
+        {
+            // 종료 설정 저장
+            IniFile.WritePrivateProfileString("camera", "x", _gameLoop.Camera.Position.x);
+            IniFile.WritePrivateProfileString("camera", "y", _gameLoop.Camera.Position.y);
+            IniFile.WritePrivateProfileString("camera", "z", _gameLoop.Camera.Position.z);
+            IniFile.WritePrivateProfileString("camera", "yaw", _gameLoop.Camera.CameraYaw);
+            IniFile.WritePrivateProfileString("camera", "pitch", _gameLoop.Camera.CameraPitch);
+            IniFile.WritePrivateProfileString("camera", "distance", ((OrbitCamera)_gameLoop.Camera).Distance);
+        }
+
         private void glControl1_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Escape)
             {
                 if (MessageBox.Show("정말로 끝내시겠습니까?", "종료", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                { 
-                    // 종료 설정 저장
-                    IniFile.WritePrivateProfileString("camera", "x", _gameLoop.Camera.Position.x);
-                    IniFile.WritePrivateProfileString("camera", "y", _gameLoop.Camera.Position.y);
-                    IniFile.WritePrivateProfileString("camera", "z", _gameLoop.Camera.Position.z);
-                    IniFile.WritePrivateProfileString("camera", "yaw", _gameLoop.Camera.CameraYaw);
-                    IniFile.WritePrivateProfileString("camera", "pitch", _gameLoop.Camera.CameraPitch);
+                {
+                    WriteEnv();
                     Application.Exit();
                 }
             }
@@ -169,6 +183,63 @@ namespace LSystem
             {
                 _animatedModel.Animator.Toggle();
             }
+        }
+
+        private void ckBoneVisible_CheckedChanged(object sender, EventArgs e)
+        {
+            IniFile.WritePrivateProfileString("control", "isvisibleBone", this.ckBoneVisible.Checked.ToString());
+        }
+
+        private void glControl1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            Camera camera = _gameLoop.Camera;
+            camera.GoTo(Vertex3f.Zero);
+        }
+
+        private void glControl1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            _isDraged = true;
+        }
+
+        private void glControl1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            _isDraged = false;
+        }
+
+        private void glControl1_MouseMove(object sender, System.Windows.Forms.MouseEventArgs e)
+        {
+            Mouse.CurrentPosition = new Vertex2i(e.X, e.Y);
+
+            if (e.Button == MouseButtons.Right)
+            {
+                Camera camera = _gameLoop.Camera;
+                Vertex2i delta = Mouse.DeltaPosition;
+                camera?.Yaw(-delta.x);
+                camera?.Pitch(delta.y);
+            }
+            else if(e.Button == MouseButtons.Middle)
+            {
+                Camera camera = _gameLoop.Camera;
+                float sensity = 0.3f;
+                Vertex2i delta = Mouse.DeltaPosition;
+                camera?.GoRight(-sensity * delta.x);
+                camera?.GoForward(sensity * delta.y);
+            }
+
+            Mouse.PrevPosition = new Vertex2i(e.X, e.Y);
+        }
+
+        private void trFov_Scroll(object sender, EventArgs e)
+        {
+            Camera camera = _gameLoop.Camera;
+            camera.FOV = trFov.Value;
+            this.lblFov.Text = "Fov=" + camera.FOV;
+            IniFile.WritePrivateProfileString("camera", "fov", camera.FOV);
+        }
+
+        private void trTime_ValueChanged(object sender, EventArgs e)
+        {
+            lblTime.Text = $"Time={_animatedModel.Animator.AnimationTime}s";
         }
     }
 }

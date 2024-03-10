@@ -11,6 +11,8 @@ namespace LSystem
         float _animationTime = 0.0f;
         bool _isPlaying = false;
 
+        public Animation CurrentAnimation => _currentAnimation;
+
         public float AnimationTime => _animationTime;
 
         /// <summary>
@@ -47,7 +49,7 @@ namespace LSystem
             _isPlaying  = !_isPlaying;
         }
 
-        public void Update(float deltaTime, Matrix4x4f rootMatrix)
+        public void Update(float deltaTime)
         {
             if (_currentAnimation == null) return;
 
@@ -58,26 +60,25 @@ namespace LSystem
                 _animationTime = _animationTime % _currentAnimation.Length;
             }
 
-            // 현재포즈를 가져온다.(bone name, mat4x4f)
+            // 키프레임으로부터 현재의 로컬포즈행렬을 가져온다.(bone name, mat4x4f)
             Dictionary<string, Matrix4x4f> currentPose = this.CalculateCurrentAnimationPose();
 
-            // 
-            Stack<Joint> stack = new Stack<Joint>();
+            // 로컬 포즈행렬로부터 캐릭터공간의 포즈행렬을 얻는다.
+            Stack<Bone> stack = new Stack<Bone>();
             Stack<Matrix4x4f> mStack = new Stack<Matrix4x4f>();
-            stack.Push(_animatedModel.RootJoint);
-            mStack.Push(rootMatrix.Inverse);
+            stack.Push(_animatedModel.RootBone);
+            mStack.Push(Matrix4x4f.Identity);
             while (stack.Count > 0)
             {
-                Joint joint = stack.Pop();
+                Bone joint = stack.Pop();
                 Matrix4x4f parentTransform = mStack.Pop();
 
-                Matrix4x4f currentLocalTransform = (currentPose.ContainsKey(joint.Name)) ?
-                    currentPose[joint.Name] : joint.BindTransform;
+                Matrix4x4f boneLocalTransform = (currentPose.ContainsKey(joint.Name)) ?
+                    currentPose[joint.Name] : joint.BindTransform; // 로컬포즈행렬이 없으면 기본바인딩행렬로 가져온다.
 
-                // 순서는 앞쪽부터 부모공간부터 변환이 되어야 한다. 
-                joint.AnimatedTransform = parentTransform * currentLocalTransform;
+                joint.AnimatedTransform =  parentTransform * boneLocalTransform; // 순서는 자식부터  v' = ... P2 P1 L v
 
-                foreach (Joint childJoint in joint.Childrens) // 순회를 위한 스택 입력
+                foreach (Bone childJoint in joint.Childrens) // 순회를 위한 스택 입력
                 {
                     stack.Push(childJoint);
                     mStack.Push(joint.AnimatedTransform);
@@ -99,7 +100,7 @@ namespace LSystem
             for (int i = 1; i < _currentAnimation.KeyFrameCount; i++)
             {
                 nextFrame = _currentAnimation.Frame(i);
-                if (nextFrame.TimeStamp >= _animationTime)
+                if (nextFrame.TimeStamp >= _animationTime - firstTime)
                 {
                     break;
                 }
@@ -115,9 +116,9 @@ namespace LSystem
             Dictionary<string, Matrix4x4f> currentPose = new Dictionary<string, Matrix4x4f>();
             foreach (string jointName in previousFrame.Pose.JointNames)
             {
-                JointTransform previousTransform = previousFrame[jointName];
-                JointTransform nextTransform = nextFrame[jointName];
-                JointTransform currentTransform = JointTransform.InterpolateSlerp(previousTransform, nextTransform, progression);
+                BonePose previousTransform = previousFrame[jointName];
+                BonePose nextTransform = nextFrame[jointName];
+                BonePose currentTransform = BonePose.InterpolateSlerp(previousTransform, nextTransform, progression);
                 currentPose[jointName] = currentTransform.LocalTransform;
             }
 

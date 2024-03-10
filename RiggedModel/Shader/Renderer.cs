@@ -32,9 +32,11 @@ namespace LSystem
             Gl.EnableVertexAttribArray(0);
             Gl.EnableVertexAttribArray(2);
 
-            // positive axis
+            Matrix4x4f mat = (Matrix4x4f)localModel;
+            Matrix4x4f scaled = Matrix4x4f.Scaled(size, size, size);
+
             Gl.LineWidth(1.0f);
-            shader.LoadModelMatrix((Matrix4x4f)localModel);
+            shader.LoadModelMatrix(mat * scaled);
             Gl.DrawArrays(PrimitiveType.Lines, 0, 6);
 
             Gl.DisableVertexAttribArray(2);
@@ -108,6 +110,7 @@ namespace LSystem
         {
             shader.Bind();
 
+            Matrix4x4f scaled = Matrix4x4f.Scaled(0.1f, 0.1f, 0.1f);
             shader.LoadModelMatrix(entity.ModelMatrix * rootMatrix);
             shader.LoadViewMatrix(camera.ViewMatrix);
             shader.LoadProjMatrix(camera.ProjectiveMatrix);
@@ -127,7 +130,14 @@ namespace LSystem
             if (entity.IsTextured)
                 shader.LoadTexture("diffuseMap", TextureUnit.Texture0, modelTextured.Texture.TextureID);
 
-            Gl.DrawElements(PrimitiveType.Triangles, entity.Model.VertexCount, DrawElementsType.UnsignedInt, System.IntPtr.Zero);
+            if (modelTextured.IsDrawElement)
+            {
+                Gl.DrawElements(PrimitiveType.Triangles, entity.Model.VertexCount, DrawElementsType.UnsignedInt, System.IntPtr.Zero);
+            }
+            else
+            {
+                Gl.DrawArrays(PrimitiveType.Triangles, 0, entity.Model.VertexCount);
+            }
 
             Gl.DisableVertexAttribArray(0);
             Gl.DisableVertexAttribArray(1);

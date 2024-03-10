@@ -8,6 +8,12 @@ namespace LSystem
         private float _distance = 1.0f;
         private const float MIN_FARAWAY_DISTANCE = 1.0f;
 
+        public float Distance
+        {
+            get => _distance;
+            set => _distance = value;
+        }
+
         public Vertex3f OrbitPositon => _position - _cameraForward * _distance;
 
         public OrbitCamera(string name, float x, float y, float z, float distance) : base(name, x, y, z)

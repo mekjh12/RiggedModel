@@ -88,9 +88,9 @@
     <Compile Include="Animate\AniModel.cs" />
     <Compile Include="Animate\Animation.cs" />
     <Compile Include="Animate\Animator.cs" />
-    <Compile Include="Animate\AniPose.cs" />
-    <Compile Include="Animate\Joint.cs" />
-    <Compile Include="Animate\JointTransform.cs" />
+    <Compile Include="Animate\ArmaturePose.cs" />
+    <Compile Include="Animate\Bone.cs" />
+    <Compile Include="Animate\BonePose.cs" />
     <Compile Include="Animate\KeyFrame.cs" />
     <Compile Include="Animate\ModelDae.cs" />
     <Compile Include="Animate\TextureStorage.cs" />

@@ -4,7 +4,7 @@ namespace LSystem
 {
     public class AnimateShader : ShaderProgram
     {
-        private static int MAX_JOINTS = 50;
+        private static int MAX_JOINTS = 128;
         const string VERTEX_FILE = @"\Shader\ani.vert";
         const string FRAGMENT_FILE = @"\Shader\ani.frag";
         //const string GEOMETRY_FILE = @"\Shader\ani.geom";

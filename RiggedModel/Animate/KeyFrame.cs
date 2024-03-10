@@ -2,26 +2,26 @@
 {
     public class KeyFrame
     {
-        private AniPose _pose;
+        private ArmaturePose _pose;
         private float _timeStamp;
 
         public KeyFrame(float timeStamp)
         {
             _timeStamp = timeStamp;
-            _pose = new AniPose();
+            _pose = new ArmaturePose();
         }
 
-        public AniPose Pose => _pose;
+        public ArmaturePose Pose => _pose;
 
         public float TimeStamp => _timeStamp;
 
-        public JointTransform this[string jointName]
+        public BonePose this[string jointName]
         {
             get => _pose[jointName];
             set => _pose[jointName] = value;
         }
 
-        public void AddJointTransform(string jointName, JointTransform jointTransform)
+        public void AddBoneTransform(string jointName, BonePose jointTransform)
         {
             _pose[jointName] = jointTransform;
         }
