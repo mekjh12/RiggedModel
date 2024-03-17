@@ -106,6 +106,40 @@ namespace LSystem
 
         }
 
+        public static void Render(BoneWeightShader shader, Matrix4x4f rootMatrix, int boneIndex, Entity entity, Camera camera)
+        {
+            shader.Bind();
+
+            shader.LoadModelMatrix(entity.ModelMatrix * rootMatrix);
+            shader.LoadViewMatrix(camera.ViewMatrix);
+            shader.LoadProjMatrix(camera.ProjectiveMatrix);
+            shader.LoadBoneIndex(boneIndex);
+
+            Gl.BindVertexArray(entity.Model.VAO);
+            Gl.EnableVertexAttribArray(0);
+            Gl.EnableVertexAttribArray(1);
+            Gl.EnableVertexAttribArray(2);
+            Gl.EnableVertexAttribArray(3);
+            Gl.EnableVertexAttribArray(4);
+
+            TexturedModel modelTextured = (TexturedModel)(entity.Model);
+
+            if (modelTextured.IsDrawElement)
+                Gl.DrawElements(PrimitiveType.Triangles, entity.Model.VertexCount, DrawElementsType.UnsignedInt, System.IntPtr.Zero);
+            else
+                Gl.DrawArrays(PrimitiveType.Triangles, 0, entity.Model.VertexCount);
+
+            Gl.DisableVertexAttribArray(0);
+            Gl.DisableVertexAttribArray(1);
+            Gl.DisableVertexAttribArray(2);
+            Gl.DisableVertexAttribArray(3);
+            Gl.DisableVertexAttribArray(4);
+            Gl.BindVertexArray(0);
+
+            shader.Unbind();
+        }
+
+
         public static void Render(AnimateShader shader, Matrix4x4f[] jointTransforms, Matrix4x4f rootMatrix, Entity entity, Camera camera)
         {
             shader.Bind();
@@ -115,7 +149,7 @@ namespace LSystem
             shader.LoadViewMatrix(camera.ViewMatrix);
             shader.LoadProjMatrix(camera.ProjectiveMatrix);
 
-            for (int i = 0; i < jointTransforms.Length; i++)
+            for (int i = 0; i < jointTransforms?.Length; i++)
                 shader.PushBoneMatrix(i, jointTransforms[i]);
 
             Gl.BindVertexArray(entity.Model.VAO);
@@ -178,7 +212,14 @@ namespace LSystem
             shader.LoadViewMatrix(camera.ViewMatrix);
             shader.LoadModelMatrix(entity.ModelMatrix);
 
-            Gl.DrawArrays(PrimitiveType.Triangles, 0, entity.Model.VertexCount);
+            if (entity.Model.IsDrawElement)
+            {
+                Gl.DrawElements(PrimitiveType.Triangles, entity.Model.VertexCount, DrawElementsType.UnsignedInt, IntPtr.Zero);
+            }
+            else
+            {
+                Gl.DrawArrays(PrimitiveType.Triangles, 0, entity.Model.VertexCount);
+            }
 
             Gl.DisableVertexAttribArray(2);
             Gl.DisableVertexAttribArray(1);

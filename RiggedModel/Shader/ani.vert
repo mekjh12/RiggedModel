@@ -6,12 +6,12 @@ const int MAX_WEIGHTS = 3;
 layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec2 in_textureCoords;
 layout(location = 2) in vec3 in_normal;
-layout(location = 3) in vec3 in_jointIndices;
-layout(location = 4) in vec3 in_weights;
+layout(location = 3) in vec4 in_jointIndices;
+layout(location = 4) in vec4 in_weights;
 
 out vec3 pass_normals;
 out vec2 pass_textureCoords;
-out vec3 pass_weights;
+out vec4 pass_weights;
 
 uniform mat4 jointTransforms[MAX_JOINTS];
 uniform mat4 proj;
@@ -36,6 +36,8 @@ void main(void)
 	}
 
 	gl_Position = proj * view * model * totalLocalPos;
+
+	//gl_Position = proj * view * model * vec4(in_position, 1.0);
 	pass_normals = totalNormal.xyz;
 	pass_textureCoords = in_textureCoords;
 	pass_weights = in_weights;

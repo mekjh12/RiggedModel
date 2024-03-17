@@ -59,7 +59,11 @@ namespace LSystem
                 while(stack.Count > 0)
                 {
                     Bone joint = stack.Pop();
-                    jointMatrices[joint.Index] = joint.AnimatedTransform * joint.InverseBindTransform;
+                    if (joint.Index >= 0)
+                    {
+                        jointMatrices[joint.Index] = joint.AnimatedTransform * joint.InverseBindTransform;
+                    }
+
                     foreach (Bone j in joint.Childrens) stack.Push(j);
                 }
                 return jointMatrices;
@@ -80,7 +84,10 @@ namespace LSystem
                 while (stack.Count > 0)
                 {
                     Bone joint = stack.Pop();
-                    jointMatrices[joint.Index] = joint.AnimatedTransform;
+                    if (joint.Index >= 0)
+                    {
+                        jointMatrices[joint.Index] = joint.AnimatedTransform;
+                    }
                     foreach (Bone j in joint.Childrens) stack.Push(j);
                 }
                 return jointMatrices;

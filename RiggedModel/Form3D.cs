@@ -1,4 +1,5 @@
-﻿using OpenGL;
+﻿using LSystem.Animate;
+using OpenGL;
 using System;
 using System.Collections.Generic;
 using System.Windows.Forms;
@@ -13,11 +14,15 @@ namespace LSystem
         List<Entity> entities;
         StaticShader _shader;
         AnimateShader _ashader;
+        BoneWeightShader _bwShader;
         AniModel _animatedModel;
-        ModelDae daeModel1;
+        //ModelDae daeModel1;
+        XmlDae xmlDae;
+        int _boneIndex = 0;
 
         PolygonMode _polygonMode = PolygonMode.Fill;
         bool _isDraged = false;
+        bool _isShifted = false;
 
         public Form3D()
         {
@@ -33,19 +38,23 @@ namespace LSystem
             _gameLoop = new EngineLoop();
             _shader = new StaticShader();
             _ashader = new AnimateShader();
+            _bwShader = new BoneWeightShader();
             entities = new List<Entity>();
 
             //string fileName = EngineLoop.PROJECT_PATH + "\\Res\\CharacterRunning.dae";
             string fileName = EngineLoop.PROJECT_PATH + "\\Res\\guy.dae";
-            daeModel1 = new ModelDae(fileName);
-            Entity daeEntity = new Entity(daeModel1.Model);
+            xmlDae = new XmlDae(fileName);
+            
+
+            //daeModel1 = new ModelDae(fileName);
+            Entity daeEntity = new Entity(xmlDae.Model);
             daeEntity.Material = new Material();
             daeEntity.Position = new Vertex3f(0, 0, 0);
             daeEntity.Scaled(1, 1, 1);
             daeEntity.IsAxisVisible = true;
-            _animatedModel = new AniModel(daeEntity, daeModel1.RootBone, daeModel1.BoneCount, daeModel1.RootMatrix4x4);
-            _animatedModel.DoAnimation(daeModel1.Animation);
-            //entities.Add(daeEntity);
+            _animatedModel = new AniModel(daeEntity, xmlDae.RootBone, xmlDae.BoneCount, Matrix4x4f.Identity);
+            _animatedModel.DoAnimation(xmlDae.Animation("Armature"));
+            entities.Add(daeEntity);
 
             // 설정
             float cx = float.Parse(IniFile.GetPrivateProfileString("camera", "x", "0.0"));
@@ -118,13 +127,14 @@ namespace LSystem
 
                 foreach (Entity entity in entities)
                 {
-                    Renderer.Render(_shader, entity, camera);
+                    //Renderer.Render(_bwShader, Matrix4x4f.Identity, _boneIndex, entity, camera);
+                    //Renderer.Render(_shader, entity, camera);
                 }
 
                 if (this.ckBoneVisible.Checked)
                 {
                     foreach (Matrix4x4f jointTransform in _animatedModel.BoneAnimationTransforms)
-                        Renderer.RenderLocalAxis(_shader, camera, size: 2.2f, daeModel1.RootBindPoseMatrix * jointTransform);
+                        Renderer.RenderLocalAxis(_shader, camera, size: 2.2f, jointTransform);
                 }
             };
         }
@@ -166,6 +176,8 @@ namespace LSystem
 
         private void glControl1_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
         {
+            if (e.Shift) _isShifted = true;
+
             if (e.KeyCode == Keys.Escape)
             {
                 if (MessageBox.Show("정말로 끝내시겠습니까?", "종료", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
@@ -182,6 +194,16 @@ namespace LSystem
             else if (e.KeyCode == Keys.Space)
             {
                 _animatedModel.Animator.Toggle();
+            }
+            else if (e.KeyCode == Keys.Oemplus)
+            {
+                _boneIndex++;
+                Console.WriteLine(_boneIndex);
+            }
+            else if (e.KeyCode == Keys.OemMinus)
+            {
+                _boneIndex--;
+                Console.WriteLine(_boneIndex);
             }
         }
 
@@ -210,20 +232,20 @@ namespace LSystem
         {
             Mouse.CurrentPosition = new Vertex2i(e.X, e.Y);
 
-            if (e.Button == MouseButtons.Right)
-            {
-                Camera camera = _gameLoop.Camera;
-                Vertex2i delta = Mouse.DeltaPosition;
-                camera?.Yaw(-delta.x);
-                camera?.Pitch(delta.y);
-            }
-            else if(e.Button == MouseButtons.Middle)
+            if (e.Button == MouseButtons.Middle && _isShifted)
             {
                 Camera camera = _gameLoop.Camera;
                 float sensity = 0.3f;
                 Vertex2i delta = Mouse.DeltaPosition;
                 camera?.GoRight(-sensity * delta.x);
                 camera?.GoForward(sensity * delta.y);
+            }
+            else if (e.Button == MouseButtons.Middle)
+            {
+                Camera camera = _gameLoop.Camera;
+                Vertex2i delta = Mouse.DeltaPosition;
+                camera?.Yaw(-delta.x);
+                camera?.Pitch(delta.y);
             }
 
             Mouse.PrevPosition = new Vertex2i(e.X, e.Y);
@@ -240,6 +262,11 @@ namespace LSystem
         private void trTime_ValueChanged(object sender, EventArgs e)
         {
             lblTime.Text = $"Time={_animatedModel.Animator.AnimationTime}s";
+        }
+
+        private void glControl1_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
+        {
+            if (!e.Shift) _isShifted = false;
         }
     }
 }

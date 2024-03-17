@@ -85,5 +85,25 @@ namespace LSystem
 
             return vboID;
         }
+
+        public static uint StoreDataInAttributeList(uint attributeNumber, int coordinateSize, uint[] data, BufferUsage usage = BufferUsage.StaticDraw)
+        {
+            // VBO 생성
+            uint vboID = Gl.GenBuffer();
+
+            // VBO의 데이터를 CPU로부터 GPU에 복사할 때 사용하는 BindBuffer를 다음과 같이 사용
+            Gl.BindBuffer(BufferTarget.ArrayBuffer, vboID);
+            Gl.BufferData(BufferTarget.ArrayBuffer, (uint)(data.Length * sizeof(uint)), data, usage);
+
+            // 이전에 BindVertexArray한 VAO에 현재 Bind된 VBO를 attributeNumber 슬롯에 설정
+            Gl.VertexAttribPointer(attributeNumber, coordinateSize, VertexAttribType.UnsignedInt, false, 0, IntPtr.Zero);
+            //Gl.VertexArrayVertexBuffer(glVertexArrayVertexBuffer, vboID, )
+
+            // GPU 메모리 조작이 필요 없다면 다음과 같이 바인딩 해제
+            Gl.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+            return vboID;
+        }
+
     }
 }

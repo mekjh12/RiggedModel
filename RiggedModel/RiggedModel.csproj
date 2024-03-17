@@ -94,8 +94,10 @@
     <Compile Include="Animate\KeyFrame.cs" />
     <Compile Include="Animate\ModelDae.cs" />
     <Compile Include="Animate\TextureStorage.cs" />
+    <Compile Include="Animate\XmlDae.cs" />
     <Compile Include="Common\IniFile.cs" />
     <Compile Include="Model\GpuLoader.cs" />
+    <Compile Include="Shader\BoneWeightShader.cs" />
     <Compile Include="Shader\AnimateShader.cs" />
     <Compile Include="Camera\Camera.cs" />
     <Compile Include="Camera\OrbitCamera.cs" />
@@ -153,6 +155,8 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="setup.ini" />
+    <None Include="Shader\bw.frag" />
+    <None Include="Shader\bw.vert" />
     <None Include="Shader\ani.frag" />
     <None Include="Shader\ani.vert" />
     <None Include="Shader\static.frag" />

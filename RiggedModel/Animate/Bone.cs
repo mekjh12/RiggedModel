@@ -7,17 +7,30 @@ namespace LSystem
     /// <summary>
     /// Bone과 동일하게 뼈로서 부모와 자식을 연결하여 Armature를 구성하는 요소이다.
     /// </summary>
-    class Bone
+    public class Bone
     {
         private int _index;
         private string _name;
         private List<Bone> _children = new List<Bone>();
+        private Bone _parent;
 
         private Matrix4x4f _animatedTransform = Matrix4x4f.Identity;
         private Matrix4x4f _bindTransform = Matrix4x4f.Identity;
         private Matrix4x4f _inverseBindTransform = Matrix4x4f.Identity;
 
-        public int Index => _index;
+        public bool IsLeaf => _children.Count == 0;
+
+        public Bone Parent
+        {
+            get => _parent; 
+            set => _parent = value;
+        }
+
+        public int Index
+        {
+            get => _index;
+            set => _index = value;
+        }
 
         public string Name
         {

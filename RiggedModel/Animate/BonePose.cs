@@ -52,7 +52,7 @@ namespace LSystem
 
         public BonePose()
         {
-            throw new System.NotImplementedException();
+            //throw new System.NotImplementedException();
         }
 
         public Matrix4x4f LocalTransform
