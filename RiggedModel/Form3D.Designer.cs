@@ -34,8 +34,11 @@
             this.lblFov = new System.Windows.Forms.Label();
             this.trTime = new System.Windows.Forms.TrackBar();
             this.lblTime = new System.Windows.Forms.Label();
+            this.trAxisLength = new System.Windows.Forms.TrackBar();
+            this.ckBoneBindPose = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.trFov)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trTime)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trAxisLength)).BeginInit();
             this.SuspendLayout();
             // 
             // glControl1
@@ -113,12 +116,35 @@
             this.lblTime.TabIndex = 5;
             this.lblTime.Text = "Time=0.0";
             // 
+            // trAxisLength
+            // 
+            this.trAxisLength.Location = new System.Drawing.Point(683, 96);
+            this.trAxisLength.Maximum = 300;
+            this.trAxisLength.Minimum = 10;
+            this.trAxisLength.Name = "trAxisLength";
+            this.trAxisLength.Size = new System.Drawing.Size(226, 45);
+            this.trAxisLength.TabIndex = 6;
+            this.trAxisLength.Value = 30;
+            this.trAxisLength.Scroll += new System.EventHandler(this.trAxisLength_Scroll);
+            // 
+            // ckBoneBindPose
+            // 
+            this.ckBoneBindPose.AutoSize = true;
+            this.ckBoneBindPose.Location = new System.Drawing.Point(781, 13);
+            this.ckBoneBindPose.Name = "ckBoneBindPose";
+            this.ckBoneBindPose.Size = new System.Drawing.Size(118, 16);
+            this.ckBoneBindPose.TabIndex = 7;
+            this.ckBoneBindPose.Text = "BindPose visible";
+            this.ckBoneBindPose.UseVisualStyleBackColor = true;
+            // 
             // Form3D
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(920, 590);
+            this.Controls.Add(this.ckBoneBindPose);
+            this.Controls.Add(this.trAxisLength);
             this.Controls.Add(this.lblTime);
             this.Controls.Add(this.trTime);
             this.Controls.Add(this.lblFov);
@@ -133,6 +159,7 @@
             this.Load += new System.EventHandler(this.Form3D_Load);
             ((System.ComponentModel.ISupportInitialize)(this.trFov)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trTime)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trAxisLength)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -146,5 +173,7 @@
         private System.Windows.Forms.Label lblFov;
         private System.Windows.Forms.TrackBar trTime;
         private System.Windows.Forms.Label lblTime;
+        private System.Windows.Forms.TrackBar trAxisLength;
+        private System.Windows.Forms.CheckBox ckBoneBindPose;
     }
 }

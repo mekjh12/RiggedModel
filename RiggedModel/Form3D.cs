@@ -2,6 +2,7 @@
 using OpenGL;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Input;
 using static Assimp.Metadata;
@@ -19,10 +20,14 @@ namespace LSystem
         //ModelDae daeModel1;
         XmlDae xmlDae;
         int _boneIndex = 0;
+        float _axisLength = 20.3f;
 
         PolygonMode _polygonMode = PolygonMode.Fill;
         bool _isDraged = false;
         bool _isShifted = false;
+
+        enum RenderingMode { Animation, BoneWeight, Static, Count };
+        RenderingMode _renderingMode = RenderingMode.Animation;
 
         public Form3D()
         {
@@ -41,18 +46,17 @@ namespace LSystem
             _bwShader = new BoneWeightShader();
             entities = new List<Entity>();
 
+            //string fileName = EngineLoop.PROJECT_PATH + "\\Res\\guy1.dae";
             //string fileName = EngineLoop.PROJECT_PATH + "\\Res\\CharacterRunning.dae";
             string fileName = EngineLoop.PROJECT_PATH + "\\Res\\guy.dae";
             xmlDae = new XmlDae(fileName);
             
-
             //daeModel1 = new ModelDae(fileName);
             Entity daeEntity = new Entity(xmlDae.Model);
             daeEntity.Material = new Material();
             daeEntity.Position = new Vertex3f(0, 0, 0);
-            daeEntity.Scaled(1, 1, 1);
             daeEntity.IsAxisVisible = true;
-            _animatedModel = new AniModel(daeEntity, xmlDae.RootBone, xmlDae.BoneCount, Matrix4x4f.Identity);
+            _animatedModel = new AniModel(daeEntity, xmlDae.RootBone, xmlDae.BoneCount, xmlDae.RootMatirix);
             _animatedModel.DoAnimation(xmlDae.Animation("Armature"));
             entities.Add(daeEntity);
 
@@ -74,6 +78,7 @@ namespace LSystem
             this.lblFov.Text = $"Fov={fov}";
             this.trTime.Maximum = (int)_animatedModel.Animator.CurrentAnimation.Length * 100;
             this.trTime.Minimum = 0;
+            this.trAxisLength.Value = (int)(_axisLength * 10.0f);
 
 
             // ### 주요로직 ###
@@ -90,6 +95,7 @@ namespace LSystem
                 }
 
                 Entity entity = entities.Count > 0 ? entities[0] : null;
+
                 _animatedModel.Update(deltaTime);
 
                 if (Keyboard.IsKeyDown(Key.D1)) entity.Roll(1);
@@ -122,8 +128,15 @@ namespace LSystem
                 Gl.PolygonMode(MaterialFace.FrontAndBack, _polygonMode);
                 Renderer.RenderAxis(_shader, camera);
 
-                Matrix4x4f[] jointMatrix = _animatedModel.BoneAnimationBindTransforms;
-                Renderer.Render(_ashader, jointMatrix, _animatedModel.RootBoneTransform, _animatedModel.ModelEntity, camera);
+                _animatedModel.BindShapeMatrix = xmlDae.BindShapeMatrix;
+                Matrix4x4f[] jointMatrix = _animatedModel.BoneAnimationBindTransforms; 
+
+                if (_renderingMode == RenderingMode.Animation)
+                    Renderer.Render(_ashader, jointMatrix, _animatedModel.RootBoneTransform * _animatedModel.BindShapeMatrix, _animatedModel.ModelEntity, camera);
+                else if (_renderingMode == RenderingMode.BoneWeight)
+                    Renderer.Render(_bwShader, _animatedModel.RootBoneTransform * _animatedModel.BindShapeMatrix, _boneIndex, _animatedModel.ModelEntity, camera);
+                else if (_renderingMode == RenderingMode.Static) // ok
+                    Renderer.Render(_shader, _animatedModel.ModelEntity, camera, _animatedModel.RootBoneTransform * _animatedModel.BindShapeMatrix);
 
                 foreach (Entity entity in entities)
                 {
@@ -131,10 +144,17 @@ namespace LSystem
                     //Renderer.Render(_shader, entity, camera);
                 }
 
+                // 정지 뼈대
+                if (this.ckBoneBindPose.Checked)
+                {
+                    foreach (Matrix4x4f jointTransform in _animatedModel.BindPoseTransforms)
+                        Renderer.RenderLocalAxis(_shader, camera, size: _axisLength, jointTransform.Inverse);
+                }
+
                 if (this.ckBoneVisible.Checked)
                 {
                     foreach (Matrix4x4f jointTransform in _animatedModel.BoneAnimationTransforms)
-                        Renderer.RenderLocalAxis(_shader, camera, size: 2.2f, jointTransform);
+                        Renderer.RenderLocalAxis(_shader, camera, size: _axisLength, jointTransform);
                 }
             };
         }
@@ -188,8 +208,8 @@ namespace LSystem
             }
             else if (e.KeyCode == Keys.F)
             {
-                _polygonMode = (_polygonMode == PolygonMode.Fill) ?
-                    PolygonMode.Line : PolygonMode.Fill;
+                _polygonMode++;
+                if (_polygonMode == (PolygonMode)6915) _polygonMode = (PolygonMode)6912;
             }
             else if (e.KeyCode == Keys.Space)
             {
@@ -205,6 +225,11 @@ namespace LSystem
                 _boneIndex--;
                 Console.WriteLine(_boneIndex);
             }
+            else if (e.KeyCode == Keys.R)
+            {
+                _renderingMode++;
+                if (_renderingMode == RenderingMode.Count) _renderingMode = 0;
+            }
         }
 
         private void ckBoneVisible_CheckedChanged(object sender, EventArgs e)
@@ -214,8 +239,8 @@ namespace LSystem
 
         private void glControl1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            Camera camera = _gameLoop.Camera;
-            camera.GoTo(Vertex3f.Zero);
+            Camera camera = _gameLoop.Camera;            
+            camera.GoTo(_animatedModel.AnimatedRootBone.Position);
         }
 
         private void glControl1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -267,6 +292,11 @@ namespace LSystem
         private void glControl1_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             if (!e.Shift) _isShifted = false;
+        }
+
+        private void trAxisLength_Scroll(object sender, EventArgs e)
+        {
+            _axisLength = trAxisLength.Value * 0.1f;
         }
     }
 }

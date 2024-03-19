@@ -26,6 +26,7 @@ void main(void)
 	for (int i=0; i<MAX_WEIGHTS; i++)
 	{
 		int index = int(in_jointIndices[i]);
+		//if (index == 0) continue;
 		mat4 jointTransform = jointTransforms[index];
 
 		vec4 posePosition = jointTransform * vec4(in_position, 1.0);

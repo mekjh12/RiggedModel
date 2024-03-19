@@ -144,14 +144,14 @@ namespace LSystem
         {
             shader.Bind();
 
-            Matrix4x4f scaled = Matrix4x4f.Scaled(0.1f, 0.1f, 0.1f);
-            shader.LoadModelMatrix(entity.ModelMatrix * rootMatrix);
+            shader.LoadModelMatrix(entity.ModelMatrix);
             shader.LoadViewMatrix(camera.ViewMatrix);
             shader.LoadProjMatrix(camera.ProjectiveMatrix);
 
             for (int i = 0; i < jointTransforms?.Length; i++)
-                shader.PushBoneMatrix(i, jointTransforms[i]);
+                shader.PushBoneMatrix(i, jointTransforms[i] * rootMatrix);
 
+            Gl.PointSize(3);
             Gl.BindVertexArray(entity.Model.VAO);
             Gl.EnableVertexAttribArray(0);
             Gl.EnableVertexAttribArray(1);
@@ -179,11 +179,12 @@ namespace LSystem
             Gl.DisableVertexAttribArray(3);
             Gl.DisableVertexAttribArray(4);
             Gl.BindVertexArray(0);
+            Gl.PointSize(1);
 
             shader.Unbind();
         }
 
-        public static void Render(StaticShader shader, Entity entity, Camera camera)
+        public static void Render(StaticShader shader, Entity entity, Camera camera, Matrix4x4f rootMatrix)
         {
             Gl.Enable(EnableCap.Blend);
             Gl.BlendEquation(BlendEquationMode.FuncAdd);
@@ -210,7 +211,7 @@ namespace LSystem
             shader.LoadObjectColor(entity.Material.Ambient);
             shader.LoadProjMatrix(camera.ProjectiveMatrix);
             shader.LoadViewMatrix(camera.ViewMatrix);
-            shader.LoadModelMatrix(entity.ModelMatrix);
+            shader.LoadModelMatrix(entity.ModelMatrix * rootMatrix);
 
             if (entity.Model.IsDrawElement)
             {

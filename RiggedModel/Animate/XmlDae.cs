@@ -1,6 +1,7 @@
 ﻿using Assimp;
 using OpenGL;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Windows.Forms;
@@ -20,7 +21,13 @@ namespace LSystem.Animate
         Dictionary<TextureType, Texture> _textures;
         Dictionary<string, int> _dicBoneIndex;
         Matrix4x4f[] _invBindPoses;
-        string[] _boneNames;        
+        string[] _boneNames;
+        Matrix4x4f _rootMatrix;
+        Matrix4x4f bind_shape_matrix;
+
+        public Matrix4x4f BindShapeMatrix => bind_shape_matrix;
+
+        public Matrix4x4f RootMatirix => _rootBone.BindTransform;
 
         public Bone RootBone => _rootBone;
 
@@ -273,7 +280,7 @@ namespace LSystem.Animate
                     {
                         for (int i = 0; i < items.Length; i += 3)
                         {
-                            lstPositions.Add(new Vertex3f(items[i], items[i + 1], items[i + 2]));
+                            lstPositions.Add(new Vertex3f(1 * items[i], 1 * items[i + 1], 1 * items[i + 2]));
                         }
                     }
                     else if ("#" + sourcesId == normalName)
@@ -317,6 +324,12 @@ namespace LSystem.Animate
                 XmlNode geometry = libraryController["controller"];
                 XmlNode joints = geometry["skin"]["joints"];
                 XmlNode vertex_weights = geometry["skin"]["vertex_weights"];
+
+                string[] eles = geometry["skin"]["bind_shape_matrix"].InnerText.Split(' ');
+                float[] eleValues = new float[eles.Length];
+                for (int i = 0; i < eles.Length; i++)
+                    eleValues[i] = float.Parse(eles[i]);
+                bind_shape_matrix = new Matrix4x4f(eleValues).Transposed;
 
                 // joints 읽어옴.
                 foreach (XmlNode input in joints.ChildNodes)
@@ -430,6 +443,7 @@ namespace LSystem.Animate
                     int vertexCount = vcountIntArray[i];
                     List<int> boneIndexList = new List<int>();
                     List<int> boneWeightList = new List<int>();
+
                     for (int j = 0; j < vertexCount; j++)
                     {
                         if (jointsOffset >= 0)
@@ -437,6 +451,7 @@ namespace LSystem.Animate
                         if (weightOffset >= 0)
                             boneWeightList.Add(int.Parse(vArray[sum + 2 * j + weightOffset].Trim()));
                     }
+
                     Vertex4i jointId = Vertex4i.Zero;
                     if (boneIndexList.Count == 0) jointId = new Vertex4i(-1, -1, -1, -1);
                     if (boneIndexList.Count == 1) jointId = new Vertex4i(boneIndexList[0], -1, -1, -1);
@@ -444,16 +459,14 @@ namespace LSystem.Animate
                     if (boneIndexList.Count == 3) jointId = new Vertex4i(boneIndexList[0], boneIndexList[1], boneIndexList[2], -1);
                     if (boneIndexList.Count >= 4) jointId = new Vertex4i(boneIndexList[0], boneIndexList[1], boneIndexList[2], boneIndexList[3]);
 
-                    Vertex4f weight = Vertex4f.Zero;
                     float bx = boneWeightList.Count > 0 ? weightList[boneWeightList[0]] : 0.0f;
                     float by = boneWeightList.Count > 1 ? weightList[boneWeightList[1]] : 0.0f;
                     float bz = boneWeightList.Count > 2 ? weightList[boneWeightList[2]] : 0.0f;
                     float bw = boneWeightList.Count > 3 ? weightList[boneWeightList[3]] : 0.0f;
-                    weight = new Vertex4f(bx, by, bz, bw);
+                    Vertex4f weight = new Vertex4f(bx, by, bz, bw);
 
                     lstBoneIndex.Add(jointId);
                     lstBoneWeight.Add(weight);
-                    //Console.WriteLine(boneWeight.ToString());
                     sum += 2 * vertexCount;
                 }
             }
@@ -480,6 +493,11 @@ namespace LSystem.Animate
                 foreach (XmlNode boneAnimation in libraryAnimation.ChildNodes)
                 {
                     string boneName = boneAnimation.Attributes["id"].Value.Substring(animationName.Length + 1);
+                    int fIdx = boneName.IndexOf("_");
+                    string actionName = (fIdx >= 0) ? boneName.Substring(0, fIdx) : "";
+                    boneName = (fIdx >= 0) ? boneName.Substring(fIdx + 1) : boneName;
+                    boneName = boneName.Replace("_pose_matrix", "");
+
                     List<float> sourceInput = new List<float>(); // time interval
                     List<Matrix4x4f> sourceOutput = new List<Matrix4x4f>();
                     List<string> interpolationInput = new List<string>();
@@ -620,9 +638,12 @@ namespace LSystem.Animate
                 string boneName = node.Attributes["sid"]?.Value;
                 if (boneName == null)
                 {
-                    bone.Name = "Armature";
-                    bone.BindTransform = mat;
-                    bone.Index = 0;
+                    if (node.Attributes["name"].Value == "Armature")
+                    {
+                        bone.Name = "Armature";
+                        bone.BindTransform = mat;
+                        bone.Index = 0;
+                    }
                 }
                 else
                 {

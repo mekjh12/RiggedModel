@@ -76,7 +76,7 @@ namespace LSystem
                 Matrix4x4f boneLocalTransform = (currentPose.ContainsKey(joint.Name)) ?
                     currentPose[joint.Name] : joint.BindTransform; // 로컬포즈행렬이 없으면 기본바인딩행렬로 가져온다.
 
-                joint.AnimatedTransform =  parentTransform * boneLocalTransform; // 순서는 자식부터  v' = ... P2 P1 L v
+                joint.AnimatedTransform = parentTransform * boneLocalTransform; // 순서는 자식부터  v' = ... P2 P1 L v
 
                 foreach (Bone childJoint in joint.Childrens) // 순회를 위한 스택 입력
                 {

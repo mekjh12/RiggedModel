@@ -49,11 +49,7 @@ namespace LSystem
         public Matrix4x4f InverseBindTransform
         {
             get => _inverseBindTransform;
-            set
-            {
-                _inverseBindTransform = value;
-                //_bindTransform = _inverseBindTransform.Inverse;
-            }
+            set => _inverseBindTransform = value;
         }
 
         public Matrix4x4f BindTransform

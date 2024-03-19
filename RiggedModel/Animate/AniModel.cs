@@ -1,4 +1,5 @@
 ﻿using OpenGL;
+using System;
 using System.Collections.Generic;
 using System.Drawing.Drawing2D;
 
@@ -11,6 +12,13 @@ namespace LSystem
         private int _jointCount;
         private Animator _animator;
         Matrix4x4f _rootBoneTransform;
+        Matrix4x4f bind_shape_matrix;
+
+        public Matrix4x4f BindShapeMatrix
+        {
+            get => bind_shape_matrix;
+            set => bind_shape_matrix = value;
+        }
 
         public Animator Animator => _animator;
 
@@ -55,7 +63,7 @@ namespace LSystem
             {
                 Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
                 Stack<Bone> stack = new Stack<Bone>();
-                stack.Push(_rootJoint);
+                stack.Push(_rootJoint.Childrens[0]);
                 while(stack.Count > 0)
                 {
                     Bone joint = stack.Pop();
@@ -63,10 +71,23 @@ namespace LSystem
                     {
                         jointMatrices[joint.Index] = joint.AnimatedTransform * joint.InverseBindTransform;
                     }
-
                     foreach (Bone j in joint.Childrens) stack.Push(j);
                 }
+
+                // 이유를 찾지 못하였지만 최상위 hipBone의 수정이 필요하여~!
+                Bone rbone = _rootJoint.Childrens[0];
+                jointMatrices[0] = rbone.AnimatedTransform * rbone.InverseBindTransform;
+                
                 return jointMatrices;
+            }
+        }
+
+        public Matrix4x4f AnimatedRootBone
+        {
+            get
+            {
+                Bone rbone = _rootJoint.Childrens[0];
+                return rbone.AnimatedTransform;
             }
         }
 
@@ -90,6 +111,11 @@ namespace LSystem
                     }
                     foreach (Bone j in joint.Childrens) stack.Push(j);
                 }
+
+                // 이유를 찾지 못하였지만 최상위 hipBone의 수정이 필요하여~!
+                Bone rbone = _rootJoint.Childrens[0];
+                jointMatrices[0] = rbone.AnimatedTransform;
+
                 return jointMatrices;
             }
         }
@@ -108,7 +134,7 @@ namespace LSystem
                 while (stack.Count > 0)
                 {
                     Bone bone = stack.Pop();
-                    jointMatrices[bone.Index] = bone.InverseBindTransform.Inverse;
+                    jointMatrices[bone.Index] = bone.InverseBindTransform;
                     foreach (Bone j in bone.Childrens) stack.Push(j);
                 }
                 return jointMatrices;
