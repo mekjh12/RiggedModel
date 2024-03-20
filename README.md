@@ -1,5 +1,5 @@
 # Animate 클래스 사용법
-1. ### XmlDae 
+### XmlDae 
   - RawModel3d 가져오기
 ```c#
 xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\guybrush.dae");
@@ -15,11 +15,11 @@ graph TD;
     Entity-->AniModel;
 ```
 
-2. Entity
+### Entity
 3. 
 4. AniModel = Entity + XmlDae
 
-# Mixamo 사용법
+### Mixamo 사용법
 1. 캐릭터 가져오기
 2. Weight 적용하기
 3. Action 추가하기
