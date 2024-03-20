@@ -23,6 +23,7 @@ graph TD;
 # Mixamo 사용법
 1. 캐릭터 가져오기
 > 블렌더 -> Export (Fbx) -> PathMode(Copy) -> Embed Textures
+
 > ![image](https://github.com/mekjh12/RiggedModel/assets/122244587/e888029e-030c-47fd-b388-608b4438bed3)
 > Mixamo -> Upload Character -> 
 3. Weight 적용하기
