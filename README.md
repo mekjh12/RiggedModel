@@ -27,11 +27,11 @@ graph TD;
 
 > Mixamo -> Upload Character -> 동그라미로 Rig 설정
 
-2. Weight 적용하기
+## Weight 적용하기
 > 자동으로 Bone에 따른 Weight를 적용함.
    
-3. 캐릭터 내보내기
+## 캐릭터 내보내기
  
 ![image](https://github.com/mekjh12/RiggedModel/assets/122244587/13536f5d-8c09-47ac-b7bc-335b39d058d7)
 
-4. Action 내보내기
+## Action 내보내기
