@@ -20,12 +20,10 @@ namespace LSystem.Animate
         Bone _rootBone;
         Dictionary<TextureType, Texture> _textures;
         Dictionary<string, int> _dicBoneIndex;
-        Matrix4x4f[] _invBindPoses;
         string[] _boneNames;
-        Matrix4x4f _rootMatrix;
-        Matrix4x4f bind_shape_matrix;
+        Matrix4x4f _bindShapeMatrix;
 
-        public Matrix4x4f BindShapeMatrix => bind_shape_matrix;
+        public Matrix4x4f BindShapeMatrix => _bindShapeMatrix;
 
         public Matrix4x4f RootMatirix => _rootBone.BindTransform;
 
@@ -33,11 +31,9 @@ namespace LSystem.Animate
 
         public int BoneCount => _boneNames.Length;
 
-        public Matrix4x4f[] BoneMatrices => _invBindPoses;
-
         public TexturedModel Model => _model;
 
-        public Animation Animation(string animationName)
+        public Animation GetAnimation(string animationName)
         {
             return (_animations.ContainsKey(animationName))? _animations[animationName] : null;
         }
@@ -53,26 +49,13 @@ namespace LSystem.Animate
             _model = Load(filename);
         }
 
-        private void PrintBoneStructure()
+        public string AddAction(string filename)
         {
-            Stack<Bone> stack = new Stack<Bone>();
-            stack.Push(_rootBone);
-            while (stack.Count > 0)
-            {
-                Bone bone = stack.Pop();
-                if (bone.IsLeaf)
-                {
-                    Bone parent = bone;
-                    string txt = "";
-                    while (parent != null)
-                    {
-                        txt = parent.Name + "->" + txt;
-                        parent = parent?.Parent;
-                    }
-                    Console.WriteLine(txt);
-                }                
-                foreach (Bone child in bone.Childrens) stack.Push(child);
-            }
+            XmlDocument xml = new XmlDocument();
+            xml.Load(filename);
+            string actionName = Path.GetFileNameWithoutExtension(filename);
+            LibraryAnimationFromDae(xml, actionName, ref _animations);
+            return actionName;
         }
 
         public TexturedModel Load(string filename)
@@ -90,6 +73,7 @@ namespace LSystem.Animate
             // (3) library_controllers = boneIndex, boneWeight
             LibraryController(xml, out List<string> boneNames, out Dictionary<string, Matrix4x4f> invBindPoses, out List<Vertex4i> lstBoneIndex, out List<Vertex4f> lstBoneWeight);
             
+            // (3-1) boneName, boneIndexDictionary
             _boneNames = new string[boneNames.Count];
             _dicBoneIndex = new Dictionary<string, int>();
             for (int i = 0; i < boneNames.Count; i++)
@@ -98,15 +82,9 @@ namespace LSystem.Animate
                 _dicBoneIndex.Add(_boneNames[i], i);
             }
 
-            _invBindPoses = new Matrix4x4f[invBindPoses.Values.Count];
-            foreach (KeyValuePair<string, Matrix4x4f> item in invBindPoses)
-            {
-                int index = _dicBoneIndex[item.Key];
-                _invBindPoses[index] = item.Value;
-            }
-
             // (4) library_animations
-            _animations = LibraryAnimations(xml);
+            if (_animations == null) _animations = new Dictionary<string, Animation>();
+            LibraryAnimations(xml, ref _animations);
 
             // (5) library_visual_scenes = bone hierarchy + rootBone
             _rootBone = LibraryVisualScenes(xml, boneNames, invBindPoses);
@@ -138,9 +116,7 @@ namespace LSystem.Animate
                 boneWeights[4 * i + 2] = (float)lstBoneWeight[idx].z;
                 boneWeights[4 * i + 3] = (float)lstBoneWeight[idx].w;
             }
-
-            PrintBoneStructure();
-
+                        
             // VAO, VBO로 Raw3d 모델을 만든다.
             uint vao = Gl.GenVertexArray();
             Gl.BindVertexArray(vao);
@@ -329,7 +305,7 @@ namespace LSystem.Animate
                 float[] eleValues = new float[eles.Length];
                 for (int i = 0; i < eles.Length; i++)
                     eleValues[i] = float.Parse(eles[i]);
-                bind_shape_matrix = new Matrix4x4f(eleValues).Transposed;
+                _bindShapeMatrix = new Matrix4x4f(eleValues).Transposed;
 
                 // joints 읽어옴.
                 foreach (XmlNode input in joints.ChildNodes)
@@ -472,32 +448,30 @@ namespace LSystem.Animate
             }
         }
 
-        private Dictionary<string, Animation> LibraryAnimations(XmlDocument xml)
+        private void LibraryAnimations(XmlDocument xml, ref Dictionary<string, Animation> animations)
         {
             XmlNodeList libraryAnimations = xml.GetElementsByTagName("library_animations");
             if (libraryAnimations.Count == 0)
             {
                 Console.WriteLine($"[에러] dae파일구조에서 애니메이션구조를 읽어올 수 없습니다.");
-                return null;
+                return;
             }
-
-            Dictionary<string, Animation> animations = new Dictionary<string, Animation>();
 
             Dictionary<string, Dictionary<float, Matrix4x4f>> ani = new Dictionary<string, Dictionary<float, Matrix4x4f>>();
             foreach (XmlNode libraryAnimation in libraryAnimations[0])
             {
                 string animationName = libraryAnimation.Attributes["name"].Value;
                 float maxTimeLength = 0.0f;
+                string actionName = "";
 
                 // bone마다 순회
                 foreach (XmlNode boneAnimation in libraryAnimation.ChildNodes)
                 {
                     string boneName = boneAnimation.Attributes["id"].Value.Substring(animationName.Length + 1);
                     int fIdx = boneName.IndexOf("_");
-                    string actionName = (fIdx >= 0) ? boneName.Substring(0, fIdx) : "";
+                    actionName = (fIdx >= 0) ? boneName.Substring(0, fIdx) : "";
                     boneName = (fIdx >= 0) ? boneName.Substring(fIdx + 1) : boneName;
                     boneName = boneName.Replace("_pose_matrix", "");
-
                     List<float> sourceInput = new List<float>(); // time interval
                     List<Matrix4x4f> sourceOutput = new List<Matrix4x4f>();
                     List<string> interpolationInput = new List<string>();
@@ -570,7 +544,7 @@ namespace LSystem.Animate
                     ani.Add(boneName, keyframe);
                 }
 
-                Animation animation = new Animation(animationName, maxTimeLength);
+                Animation animation = new Animation(actionName, maxTimeLength);
                 if (maxTimeLength > 0)
                 {
                     foreach (KeyValuePair<string, Dictionary<float, Matrix4x4f>> item in ani)
@@ -592,10 +566,8 @@ namespace LSystem.Animate
                         }
                     }
                 }
-                animations.Add(animationName, animation);
+                animations.Add(actionName, animation);
             }
-
-            return animations;
         }
 
         /// <summary>
@@ -672,6 +644,130 @@ namespace LSystem.Animate
             }
 
             return rootBone;
+        }
+
+        /// <summary>
+        /// * Mixamo에서 Export한 Dae파일을 그대로 읽어온다. <br/>
+        /// - Without Skin, Only Armature <br/>
+        /// </summary>
+        /// <param name="xml"></param>
+        /// <param name="animations"></param>
+        private void LibraryAnimationFromDae(XmlDocument xml, string actionName, ref Dictionary<string, Animation> animations)
+        {
+            XmlNodeList libraryAnimations = xml.GetElementsByTagName("library_animations");
+            if (libraryAnimations.Count == 0)
+            {
+                Console.WriteLine($"[에러] dae파일구조에서 애니메이션구조를 읽어올 수 없습니다.");
+                return;
+            }
+
+            Dictionary<string, Dictionary<float, Matrix4x4f>> ani = new Dictionary<string, Dictionary<float, Matrix4x4f>>();
+            float maxTimeLength = 0.0f;
+            //string animationName = libraryAnimation.Attributes["name"].Value;
+
+            // bone마다 순회
+            foreach (XmlNode boneAnimation in libraryAnimations[0].ChildNodes)
+            {
+                string boneName = boneAnimation.Attributes["id"].Value;
+                boneName = boneName.Substring(0, boneName.Length - 5);
+                if (boneName == "Armature") continue;
+
+                List<float> sourceInput = new List<float>(); // time interval
+                List<Matrix4x4f> sourceOutput = new List<Matrix4x4f>();
+                List<string> interpolationInput = new List<string>();
+
+                XmlNode channel = boneAnimation["channel"];
+                string channelName = channel.Attributes["source"].Value;
+
+                XmlNode sampler = boneAnimation["sampler"];
+                if (channelName != "#" + sampler.Attributes["id"].Value) continue;
+
+                string inputName = "";
+                string outputName = "";
+                string interpolationName = "";
+
+                // semantic의 Name을 읽어옴.
+                foreach (XmlNode input in sampler.ChildNodes)
+                {
+                    if (input.Attributes["semantic"].Value == "INPUT") inputName = input.Attributes["source"].Value;
+                    if (input.Attributes["semantic"].Value == "OUTPUT") outputName = input.Attributes["source"].Value;
+                    if (input.Attributes["semantic"].Value == "INTERPOLATION") interpolationName = input.Attributes["source"].Value;
+                }
+
+                // bone의 애니메이션 소스를 읽어온다.
+                foreach (XmlNode source in boneAnimation.ChildNodes)
+                {
+                    if (source.Name == "source")
+                    {
+                        string sourcesId = source.Attributes["id"].Value;
+                        if ("#" + sourcesId == inputName)
+                        {
+                            string[] value = source["float_array"].InnerText.Trim().Replace("\n"," ").Split(' ');
+                            float[] items = new float[value.Length];
+                            for (int i = 0; i < value.Length; i++)
+                            {
+                                items[i] = float.Parse(value[i].Trim());
+                                maxTimeLength = Math.Max(items[i], maxTimeLength);
+                            }
+                            sourceInput.AddRange(items);
+                        }
+
+                        if ("#" + sourcesId == outputName)
+                        {
+                            string[] value = source["float_array"].InnerText.Trim().Replace("\n", " ").Split(' ');
+                            float[] items = new float[value.Length];
+                            for (int i = 0; i < value.Length; i++) items[i] = float.Parse(value[i]);
+                            for (int i = 0; i < value.Length; i += 16)
+                            {
+                                List<float> mat = new List<float>();
+                                for (int j = 0; j < 16; j++) mat.Add(items[i + j]);
+                                Matrix4x4f matrix = new Matrix4x4f(mat.ToArray());
+                                sourceOutput.Add(matrix.Transposed);
+                            }
+                        }
+
+                        if ("#" + sourcesId == interpolationName)
+                        {
+                            string[] value = source["Name_array"].InnerText.Trim().Replace("\n", " ").Split(' ');
+                            interpolationInput.AddRange(value);
+                        }
+                    }
+                }
+
+                // 가져온 소스로 키프레임을 만든다.
+                Dictionary<float, Matrix4x4f> keyframe = new Dictionary<float, Matrix4x4f>();
+                for (int i = 0; i < sourceInput.Count; i++)
+                {
+                    keyframe.Add(sourceInput[i], sourceOutput[i]);
+                }
+
+                ani.Add(boneName, keyframe);
+            }
+
+            Animation animation = new Animation(actionName, maxTimeLength);
+            if (maxTimeLength > 0)
+            {
+                foreach (KeyValuePair<string, Dictionary<float, Matrix4x4f>> item in ani)
+                {
+                    string boneName = item.Key;
+                    Dictionary<float, Matrix4x4f> source = item.Value;
+                    foreach (KeyValuePair<float, Matrix4x4f> subsource in source)
+                    {
+                        float time = subsource.Key;
+                        Matrix4x4f mat = subsource.Value;
+                        animation.AddKeyFrame(time);
+
+                        Quaternion q = ToQuaternion(mat);
+                        q.Normalize();
+                        BonePose bonePose = new BonePose();
+                        bonePose.Position = new Vertex3f(mat[3, 0], mat[3, 1], mat[3, 2]);
+                        bonePose.Rotation = q;
+                        animation[time].AddBoneTransform(boneName, bonePose);
+                    }
+                }
+            }
+            animations.Add(actionName, animation);
+
         }
 
         /// <summary>

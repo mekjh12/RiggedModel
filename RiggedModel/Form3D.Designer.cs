@@ -36,6 +36,7 @@
             this.lblTime = new System.Windows.Forms.Label();
             this.trAxisLength = new System.Windows.Forms.TrackBar();
             this.ckBoneBindPose = new System.Windows.Forms.CheckBox();
+            this.cbAction = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.trFov)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trTime)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trAxisLength)).BeginInit();
@@ -51,7 +52,7 @@
             this.glControl1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.glControl1.MultisampleBits = ((uint)(0u));
             this.glControl1.Name = "glControl1";
-            this.glControl1.Size = new System.Drawing.Size(675, 590);
+            this.glControl1.Size = new System.Drawing.Size(675, 542);
             this.glControl1.StencilBits = ((uint)(8u));
             this.glControl1.TabIndex = 0;
             this.glControl1.Render += new System.EventHandler<OpenGL.GlControlEventArgs>(this.glControl1_Render);
@@ -68,17 +69,17 @@
             this.ckBoneVisible.AutoSize = true;
             this.ckBoneVisible.Checked = true;
             this.ckBoneVisible.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ckBoneVisible.Location = new System.Drawing.Point(683, 13);
+            this.ckBoneVisible.Location = new System.Drawing.Point(683, 34);
             this.ckBoneVisible.Name = "ckBoneVisible";
-            this.ckBoneVisible.Size = new System.Drawing.Size(92, 16);
+            this.ckBoneVisible.Size = new System.Drawing.Size(95, 16);
             this.ckBoneVisible.TabIndex = 1;
-            this.ckBoneVisible.Text = "bone visible";
+            this.ckBoneVisible.Text = "Bone Visible";
             this.ckBoneVisible.UseVisualStyleBackColor = true;
             this.ckBoneVisible.CheckedChanged += new System.EventHandler(this.ckBoneVisible_CheckedChanged);
             // 
             // trFov
             // 
-            this.trFov.Location = new System.Drawing.Point(682, 35);
+            this.trFov.Location = new System.Drawing.Point(683, 107);
             this.trFov.Maximum = 160;
             this.trFov.Minimum = 30;
             this.trFov.Name = "trFov";
@@ -90,7 +91,7 @@
             // lblFov
             // 
             this.lblFov.AutoSize = true;
-            this.lblFov.Location = new System.Drawing.Point(692, 68);
+            this.lblFov.Location = new System.Drawing.Point(692, 140);
             this.lblFov.Name = "lblFov";
             this.lblFov.Size = new System.Drawing.Size(43, 12);
             this.lblFov.TabIndex = 3;
@@ -98,11 +99,11 @@
             // 
             // trTime
             // 
-            this.trTime.Location = new System.Drawing.Point(683, 545);
+            this.trTime.Location = new System.Drawing.Point(0, 548);
             this.trTime.Maximum = 160;
             this.trTime.Minimum = 30;
             this.trTime.Name = "trTime";
-            this.trTime.Size = new System.Drawing.Size(226, 45);
+            this.trTime.Size = new System.Drawing.Size(614, 45);
             this.trTime.TabIndex = 4;
             this.trTime.Value = 30;
             this.trTime.ValueChanged += new System.EventHandler(this.trTime_ValueChanged);
@@ -110,7 +111,7 @@
             // lblTime
             // 
             this.lblTime.AutoSize = true;
-            this.lblTime.Location = new System.Drawing.Point(692, 530);
+            this.lblTime.Location = new System.Drawing.Point(620, 548);
             this.lblTime.Name = "lblTime";
             this.lblTime.Size = new System.Drawing.Size(56, 12);
             this.lblTime.TabIndex = 5;
@@ -118,7 +119,7 @@
             // 
             // trAxisLength
             // 
-            this.trAxisLength.Location = new System.Drawing.Point(683, 96);
+            this.trAxisLength.Location = new System.Drawing.Point(682, 56);
             this.trAxisLength.Maximum = 300;
             this.trAxisLength.Minimum = 10;
             this.trAxisLength.Name = "trAxisLength";
@@ -130,12 +131,23 @@
             // ckBoneBindPose
             // 
             this.ckBoneBindPose.AutoSize = true;
-            this.ckBoneBindPose.Location = new System.Drawing.Point(781, 13);
+            this.ckBoneBindPose.Location = new System.Drawing.Point(683, 12);
             this.ckBoneBindPose.Name = "ckBoneBindPose";
             this.ckBoneBindPose.Size = new System.Drawing.Size(118, 16);
             this.ckBoneBindPose.TabIndex = 7;
             this.ckBoneBindPose.Text = "BindPose visible";
             this.ckBoneBindPose.UseVisualStyleBackColor = true;
+            // 
+            // cbAction
+            // 
+            this.cbAction.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbAction.Font = new System.Drawing.Font("Consolas", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbAction.FormattingEnabled = true;
+            this.cbAction.Location = new System.Drawing.Point(683, 545);
+            this.cbAction.Name = "cbAction";
+            this.cbAction.Size = new System.Drawing.Size(209, 26);
+            this.cbAction.TabIndex = 11;
+            this.cbAction.SelectedIndexChanged += new System.EventHandler(this.cbAction_SelectedIndexChanged);
             // 
             // Form3D
             // 
@@ -143,6 +155,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(920, 590);
+            this.Controls.Add(this.cbAction);
             this.Controls.Add(this.ckBoneBindPose);
             this.Controls.Add(this.trAxisLength);
             this.Controls.Add(this.lblTime);
@@ -175,5 +188,6 @@
         private System.Windows.Forms.Label lblTime;
         private System.Windows.Forms.TrackBar trAxisLength;
         private System.Windows.Forms.CheckBox ckBoneBindPose;
+        private System.Windows.Forms.ComboBox cbAction;
     }
 }

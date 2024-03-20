@@ -16,8 +16,8 @@ namespace LSystem
         StaticShader _shader;
         AnimateShader _ashader;
         BoneWeightShader _bwShader;
-        AniModel _animatedModel;
-        //ModelDae daeModel1;
+
+        AniModel _aniModel;
         XmlDae xmlDae;
         int _boneIndex = 0;
         float _axisLength = 20.3f;
@@ -35,7 +35,7 @@ namespace LSystem
         }
 
         private void Form3D_Load(object sender, EventArgs e)
-        {
+        {            
             // ### 초기화 ###
             IniFile.SetFileName("setup.ini");
 
@@ -46,19 +46,18 @@ namespace LSystem
             _bwShader = new BoneWeightShader();
             entities = new List<Entity>();
 
-            //string fileName = EngineLoop.PROJECT_PATH + "\\Res\\guy1.dae";
-            //string fileName = EngineLoop.PROJECT_PATH + "\\Res\\CharacterRunning.dae";
-            string fileName = EngineLoop.PROJECT_PATH + "\\Res\\guy.dae";
-            xmlDae = new XmlDae(fileName);
-            
-            //daeModel1 = new ModelDae(fileName);
+            xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\guybrush.dae");
+            this.cbAction.Items.Add(xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae"));
+            this.cbAction.Items.Add(xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Dying.dae"));
+            this.cbAction.Items.Add(xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Walk With Rifle.dae"));
+
             Entity daeEntity = new Entity(xmlDae.Model);
             daeEntity.Material = new Material();
             daeEntity.Position = new Vertex3f(0, 0, 0);
             daeEntity.IsAxisVisible = true;
-            _animatedModel = new AniModel(daeEntity, xmlDae.RootBone, xmlDae.BoneCount, xmlDae.RootMatirix);
-            _animatedModel.DoAnimation(xmlDae.Animation("Armature"));
-            entities.Add(daeEntity);
+
+            _aniModel = new AniModel(daeEntity, xmlDae);
+            _aniModel.SetAnimation("SlowRun");
 
             // 설정
             float cx = float.Parse(IniFile.GetPrivateProfileString("camera", "x", "0.0"));
@@ -76,7 +75,7 @@ namespace LSystem
             _gameLoop.Camera.FOV = fov;
             this.trFov.Value = (int)fov;
             this.lblFov.Text = $"Fov={fov}";
-            this.trTime.Maximum = (int)_animatedModel.Animator.CurrentAnimation.Length * 100;
+            this.trTime.Maximum = (int)_aniModel.Animator.CurrentAnimation.Length * 100;
             this.trTime.Minimum = 0;
             this.trAxisLength.Value = (int)(_axisLength * 10.0f);
 
@@ -95,8 +94,7 @@ namespace LSystem
                 }
 
                 Entity entity = entities.Count > 0 ? entities[0] : null;
-
-                _animatedModel.Update(deltaTime);
+                _aniModel.Update(deltaTime);
 
                 if (Keyboard.IsKeyDown(Key.D1)) entity.Roll(1);
                 if (Keyboard.IsKeyDown(Key.D2)) entity.Roll(-1);
@@ -107,7 +105,7 @@ namespace LSystem
 
                 OrbitCamera camera = _gameLoop.Camera as OrbitCamera;
                 this.Text = $"{FramePerSecond.FPS}fps, t={FramePerSecond.GlobalTick} p={camera.Position}, distance={camera.Distance}";
-                this.trTime.Value = (int)(_animatedModel.AnimationTime * 100).Clamp(0, this.trTime.Maximum);
+                this.trTime.Value = (int)(_aniModel.AnimationTime * 100).Clamp(0, this.trTime.Maximum);
             };
 
             _gameLoop.RenderFrame = (deltaTime) =>
@@ -128,32 +126,27 @@ namespace LSystem
                 Gl.PolygonMode(MaterialFace.FrontAndBack, _polygonMode);
                 Renderer.RenderAxis(_shader, camera);
 
-                _animatedModel.BindShapeMatrix = xmlDae.BindShapeMatrix;
-                Matrix4x4f[] jointMatrix = _animatedModel.BoneAnimationBindTransforms; 
+
+                _aniModel.BindShapeMatrix = xmlDae.BindShapeMatrix;
+                Matrix4x4f[] jointMatrix = _aniModel.BoneAnimationBindTransforms;
+                Matrix4x4f poseRootMatrix = _aniModel.RootBoneTransform * _aniModel.BindShapeMatrix;
 
                 if (_renderingMode == RenderingMode.Animation)
-                    Renderer.Render(_ashader, jointMatrix, _animatedModel.RootBoneTransform * _animatedModel.BindShapeMatrix, _animatedModel.ModelEntity, camera);
+                    Renderer.Render(_ashader, jointMatrix, poseRootMatrix, _aniModel.Entity, camera);
                 else if (_renderingMode == RenderingMode.BoneWeight)
-                    Renderer.Render(_bwShader, _animatedModel.RootBoneTransform * _animatedModel.BindShapeMatrix, _boneIndex, _animatedModel.ModelEntity, camera);
-                else if (_renderingMode == RenderingMode.Static) // ok
-                    Renderer.Render(_shader, _animatedModel.ModelEntity, camera, _animatedModel.RootBoneTransform * _animatedModel.BindShapeMatrix);
-
-                foreach (Entity entity in entities)
+                    Renderer.Render(_bwShader, poseRootMatrix, _boneIndex, _aniModel.Entity, camera);
+                else if (_renderingMode == RenderingMode.Static)
+                    Renderer.Render(_shader, _aniModel.Entity, camera, poseRootMatrix);
+                
+                if (this.ckBoneBindPose.Checked) // 정지 뼈대
                 {
-                    //Renderer.Render(_bwShader, Matrix4x4f.Identity, _boneIndex, entity, camera);
-                    //Renderer.Render(_shader, entity, camera);
-                }
-
-                // 정지 뼈대
-                if (this.ckBoneBindPose.Checked)
-                {
-                    foreach (Matrix4x4f jointTransform in _animatedModel.BindPoseTransforms)
+                    foreach (Matrix4x4f jointTransform in _aniModel.InverseBindPoseTransforms)
                         Renderer.RenderLocalAxis(_shader, camera, size: _axisLength, jointTransform.Inverse);
                 }
-
-                if (this.ckBoneVisible.Checked)
+                
+                if (this.ckBoneVisible.Checked) // 애니메이션 뼈대 렌더링
                 {
-                    foreach (Matrix4x4f jointTransform in _animatedModel.BoneAnimationTransforms)
+                    foreach (Matrix4x4f jointTransform in _aniModel.BoneAnimationTransforms)
                         Renderer.RenderLocalAxis(_shader, camera, size: _axisLength, jointTransform);
                 }
             };
@@ -213,7 +206,7 @@ namespace LSystem
             }
             else if (e.KeyCode == Keys.Space)
             {
-                _animatedModel.Animator.Toggle();
+                _aniModel.Animator.Toggle();
             }
             else if (e.KeyCode == Keys.Oemplus)
             {
@@ -240,7 +233,7 @@ namespace LSystem
         private void glControl1_MouseDoubleClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             Camera camera = _gameLoop.Camera;            
-            camera.GoTo(_animatedModel.AnimatedRootBone.Position);
+            camera.GoTo(_aniModel.AnimatedRootBone.Position);
         }
 
         private void glControl1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -286,7 +279,7 @@ namespace LSystem
 
         private void trTime_ValueChanged(object sender, EventArgs e)
         {
-            lblTime.Text = $"Time={_animatedModel.Animator.AnimationTime}s";
+            lblTime.Text = $"Time={_aniModel.Animator.AnimationTime}s";
         }
 
         private void glControl1_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
@@ -297,6 +290,11 @@ namespace LSystem
         private void trAxisLength_Scroll(object sender, EventArgs e)
         {
             _axisLength = trAxisLength.Value * 0.1f;
+        }
+
+        private void cbAction_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _aniModel.SetAnimation(cbAction.Text);
         }
     }
 }

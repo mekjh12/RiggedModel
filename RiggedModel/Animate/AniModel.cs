@@ -1,25 +1,31 @@
-﻿using OpenGL;
-using System;
+﻿using LSystem.Animate;
+using OpenGL;
 using System.Collections.Generic;
-using System.Drawing.Drawing2D;
 
 namespace LSystem
 {
     class AniModel
     {
         private Entity _model;
-        private Bone _rootJoint;
+        private Bone _rootBone;
         private int _jointCount;
         private Animator _animator;
         Matrix4x4f _rootBoneTransform;
-        Matrix4x4f bind_shape_matrix;
+        Matrix4x4f _bindShapeMatrix;
+        XmlDae _xmlDae;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public Matrix4x4f BindShapeMatrix
         {
-            get => bind_shape_matrix;
-            set => bind_shape_matrix = value;
+            get => _bindShapeMatrix;
+            set => _bindShapeMatrix = value;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public Animator Animator => _animator;
 
         /// <summary>
@@ -27,26 +33,50 @@ namespace LSystem
         /// </summary>
         public Matrix4x4f RootBoneTransform => _rootBoneTransform;
 
+        /// <summary>
+        /// 
+        /// </summary>
         public float AnimationTime => _animator.AnimationTime;
 
-        public Entity ModelEntity => _model;
+        /// <summary>
+        /// 
+        /// </summary>
+        public Entity Entity => _model;
 
-        public Bone RootBone => _rootJoint;
+        /// <summary>
+        /// 
+        /// </summary>
+        public Bone RootBone => _rootBone;
 
-        public AniModel(Entity model, Bone rootJoint, int jointCount, Matrix4x4f rootBoneTransform)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="model"></param>
+        /// <param name="xmlDae"></param>
+        public AniModel(Entity model, XmlDae xmlDae)
         {
             _model = model;
-            _rootJoint = rootJoint;
-            _jointCount = jointCount;
+            _xmlDae = xmlDae;
+            _rootBone = xmlDae.RootBone;
+            _jointCount = xmlDae.BoneCount;
             _animator = new Animator(this);
-            _rootBoneTransform = rootBoneTransform;
+            _rootBoneTransform = xmlDae.RootMatirix;
         }
 
-        public void DoAnimation(Animation animation)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="actionName"></param>
+        public void SetAnimation(string actionName)
         {
+            Animation animation = _xmlDae.GetAnimation(actionName);
             _animator.SetAnimation(animation);
         }
 
+        /// <summary>
+        /// 업데이트를 통하여 애니메이션 행렬을 업데이트한다.
+        /// </summary>
+        /// <param name="deltaTime"></param>
         public void Update(int deltaTime)
         {
             _animator.Update(0.001f * deltaTime);
@@ -63,7 +93,7 @@ namespace LSystem
             {
                 Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
                 Stack<Bone> stack = new Stack<Bone>();
-                stack.Push(_rootJoint.Childrens[0]);
+                stack.Push(_rootBone.Childrens[0]);
                 while(stack.Count > 0)
                 {
                     Bone joint = stack.Pop();
@@ -74,19 +104,22 @@ namespace LSystem
                     foreach (Bone j in joint.Childrens) stack.Push(j);
                 }
 
-                // 이유를 찾지 못하였지만 최상위 hipBone의 수정이 필요하여~!
-                Bone rbone = _rootJoint.Childrens[0];
+                // 이유를 찾지 못하였지만 최상위 bone의 수정이 필요하여~!
+                Bone rbone = _rootBone.Childrens[0];
                 jointMatrices[0] = rbone.AnimatedTransform * rbone.InverseBindTransform;
                 
                 return jointMatrices;
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public Matrix4x4f AnimatedRootBone
         {
             get
             {
-                Bone rbone = _rootJoint.Childrens[0];
+                Bone rbone = _rootBone.Childrens[0];
                 return rbone.AnimatedTransform;
             }
         }
@@ -101,7 +134,7 @@ namespace LSystem
             {
                 Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
                 Stack<Bone> stack = new Stack<Bone>();
-                stack.Push(_rootJoint);
+                stack.Push(_rootBone);
                 while (stack.Count > 0)
                 {
                     Bone joint = stack.Pop();
@@ -113,7 +146,7 @@ namespace LSystem
                 }
 
                 // 이유를 찾지 못하였지만 최상위 hipBone의 수정이 필요하여~!
-                Bone rbone = _rootJoint.Childrens[0];
+                Bone rbone = _rootBone.Childrens[0];
                 jointMatrices[0] = rbone.AnimatedTransform;
 
                 return jointMatrices;
@@ -122,15 +155,15 @@ namespace LSystem
 
         /// <summary>
         /// * 초기의 캐릭터공간에서의 바인드 포즈행렬을 가져온다. <br/>
-        /// * 포즈행렬이란 한 뼈공간에서의 점의 상대적 좌표를 가져오는 행렬이다.<br/>
+        /// - 포즈행렬이란 한 뼈공간에서의 점의 상대적 좌표를 가져오는 행렬이다.<br/>
         /// </summary>
-        public Matrix4x4f[] BindPoseTransforms
+        public Matrix4x4f[] InverseBindPoseTransforms
         {
             get
             {
                 Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
                 Stack<Bone> stack = new Stack<Bone>();
-                stack.Push(_rootJoint);
+                stack.Push(_rootBone);
                 while (stack.Count > 0)
                 {
                     Bone bone = stack.Pop();
