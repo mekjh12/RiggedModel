@@ -16,6 +16,7 @@ xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae")
 ```mermaid
 graph TD;
     XmlDae-->AniModel;
+    XmlDae-->Entity;
     Entity-->AniModel;
 ```
 
