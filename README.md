@@ -4,7 +4,7 @@
 ```c#
 xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\guybrush.dae");
 ```
-  - Action 가져오기
+  - Action 가져오기 (Action 파일의 생성법은 아래 참고)
 ```c#
 xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae")
 ```
@@ -13,6 +13,8 @@ xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae")
 2. Entity
 3. 
 4. AniModel = Entity + XmlDae
+
+# Mixamo 사용법
 
 
 # Bone Weight
