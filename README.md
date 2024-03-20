@@ -9,15 +9,15 @@ xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\guybrush.dae");
 xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae")
 ```
 
+
+### Entity
+
+### AniModel
 ```mermaid
 graph TD;
     XmlDae-->AniModel;
     Entity-->AniModel;
 ```
-
-### Entity
-3. 
-4. AniModel = Entity + XmlDae
 
 ### Mixamo 사용법
 1. 캐릭터 가져오기
