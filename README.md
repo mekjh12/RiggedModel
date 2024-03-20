@@ -1,7 +1,6 @@
 # Animate 클래스 사용법
-## XmlDae 
+1. XmlDae 
   - RawModel3d는 XmlDae로부터 읽어온다.
-
 ```c#
             xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\guybrush.dae");
 ```
