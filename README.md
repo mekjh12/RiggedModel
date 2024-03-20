@@ -8,33 +8,12 @@ xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\guybrush.dae");
 ```c#
 xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae")
 ```
-> 다음이다.
-`ㅁㅁㅁㅁ`
-> [Contribution guidelines for this project](docs/CONTRIBUTING.md)
 
-abc:
 ```mermaid
 graph TD;
-    A-->B;
-    A-->C;
-    B-->D;
-    C-->D;
+    XmlDae-->AniModel;
+    Entity-->AniModel;
 ```
-<details>
-
-<summary>Tips for collapsed sections</summary>
-
- You can add a header
-
-You can add text within a collapsed section. 
- 
-You can add an image or a code block, too.
-
-```ruby
-   puts "Hello World"
-```
-
-</details>
 
 2. Entity
 3. 
