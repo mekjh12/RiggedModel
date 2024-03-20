@@ -23,4 +23,6 @@ graph TD;
 ### Mixamo 사용법
 1. 캐릭터 가져오기
 2. Weight 적용하기
-3. Action 추가하기
+3. 캐릭터 내보내기
+![image](https://github.com/mekjh12/RiggedModel/assets/122244587/13536f5d-8c09-47ac-b7bc-335b39d058d7)
+4. Action 추가하기
