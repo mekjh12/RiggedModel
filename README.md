@@ -31,8 +31,12 @@ graph TD;
 * 자동으로 Bone에 따른 Weight를 적용함.
    
 ### 캐릭터 내보내기
- 
-![image](https://github.com/mekjh12/RiggedModel/assets/122244587/a00a34f2-5987-4975-a973-3886e3f2211a)
+* 캐릭터만 FBX Binary, T-pose로 보내기
+* 블렌더에서 Import
+* 
+
+![image](https://github.com/mekjh12/RiggedModel/assets/122244587/dbe7901b-fba0-4a72-9d19-cb1293aa3bb3)
+
 
 ### Action 내보내기
 
