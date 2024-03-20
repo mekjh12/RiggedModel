@@ -1,5 +1,5 @@
 # Animate 클래스 사용법
-1. XmlDae 
+## XmlDae 
   - RawModel3d는 XmlDae로부터 읽어온다.
 
 ```c#
