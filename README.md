@@ -33,7 +33,9 @@ graph TD;
 ### 캐릭터 내보내기
 * 캐릭터만 FBX Binary, T-pose로 보내기
 * 블렌더에서 fbx파일 Import하기
-* 오브젝트와 Armature를 선택하여 DAE Export하기 (옵션: ![image](https://github.com/mekjh12/RiggedModel/assets/122244587/7460125f-fa28-4da9-ba2e-1f0a8c93b548)
+* 오브젝트와 Armature를 선택하여 DAE Export하기 (옵션:
+![image](https://github.com/mekjh12/RiggedModel/assets/122244587/7460125f-fa28-4da9-ba2e-1f0a8c93b548)
+![image](https://github.com/mekjh12/RiggedModel/assets/122244587/6d3a40dd-4a7e-412a-98b2-8f3f5ef35937)
 
 ![image](https://github.com/mekjh12/RiggedModel/assets/122244587/dbe7901b-fba0-4a72-9d19-cb1293aa3bb3)
 
