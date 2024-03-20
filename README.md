@@ -22,13 +22,13 @@ graph TD;
 
 # Mixamo 사용법
 ### 캐릭터 가져오기
-> 블렌더 -> Export (Fbx) -> PathMode(Copy) -> Embed Textures
+* 블렌더 -> Export (Fbx) -> PathMode(Copy) -> Embed Textures
  ![image](https://github.com/mekjh12/RiggedModel/assets/122244587/e888029e-030c-47fd-b388-608b4438bed3)
 
-> Mixamo -> Upload Character -> 동그라미로 Rig 설정
+* Mixamo -> Upload Character -> 동그라미로 Rig 설정
 
 ### Weight 적용하기
-> 자동으로 Bone에 따른 Weight를 적용함.
+* 자동으로 Bone에 따른 Weight를 적용함.
    
 ### 캐릭터 내보내기
  
