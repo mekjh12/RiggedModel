@@ -35,3 +35,8 @@ graph TD;
 ![image](https://github.com/mekjh12/RiggedModel/assets/122244587/a00a34f2-5987-4975-a973-3886e3f2211a)
 
 ### Action 내보내기
+
+![image](https://github.com/mekjh12/RiggedModel/assets/122244587/28e7875f-29a4-4bc0-974b-9edbbb6e68bd)
+
+
+
