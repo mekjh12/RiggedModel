@@ -10,6 +10,9 @@ xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae")
 ```
 > 다음이다.
 `ㅁㅁㅁㅁ`
+> [Contribution guidelines for this project](docs/CONTRIBUTING.md)
+
+
 2. Entity
 3. 
 4. AniModel = Entity + XmlDae
