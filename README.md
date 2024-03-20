@@ -24,7 +24,7 @@ graph TD;
 
 <summary>Tips for collapsed sections</summary>
 
-### You can add a header
+ You can add a header
 
 You can add text within a collapsed section. 
  
