@@ -8,7 +8,7 @@ xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\guybrush.dae");
 ```c#
 xmlDae.AddAction(EngineLoop.PROJECT_PATH + "\\Res\\Action\\Jump.dae")
 ```
-    
+> 다음이다.
 
 2. Entity
 3. 
