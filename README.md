@@ -30,8 +30,8 @@ graph TD;
 2. Weight 적용하기
 > 자동으로 Bone에 따른 Weight를 적용함.
    
-4. 캐릭터 내보내기
+3. 캐릭터 내보내기
  
 ![image](https://github.com/mekjh12/RiggedModel/assets/122244587/13536f5d-8c09-47ac-b7bc-335b39d058d7)
 
-5. Action 추가하기
+4. Action 내보내기
