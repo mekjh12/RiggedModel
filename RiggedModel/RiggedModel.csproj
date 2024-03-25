@@ -92,11 +92,13 @@
     <Compile Include="Animate\Bone.cs" />
     <Compile Include="Animate\BonePose.cs" />
     <Compile Include="Animate\KeyFrame.cs" />
+    <Compile Include="Animate\Kinetics.cs" />
     <Compile Include="Animate\ModelDae.cs" />
     <Compile Include="Animate\TextureStorage.cs" />
     <Compile Include="Animate\XmlDae.cs" />
     <Compile Include="Common\IniFile.cs" />
     <Compile Include="Model\GpuLoader.cs" />
+    <Compile Include="Picker3d.cs" />
     <Compile Include="Shader\BoneWeightShader.cs" />
     <Compile Include="Shader\AnimateShader.cs" />
     <Compile Include="Camera\Camera.cs" />

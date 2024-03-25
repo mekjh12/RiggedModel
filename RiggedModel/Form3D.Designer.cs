@@ -37,9 +37,13 @@
             this.trAxisLength = new System.Windows.Forms.TrackBar();
             this.ckBoneBindPose = new System.Windows.Forms.CheckBox();
             this.cbAction = new System.Windows.Forms.ComboBox();
+            this.btnIKSolved = new System.Windows.Forms.Button();
+            this.trThick = new System.Windows.Forms.TrackBar();
+            this.lbPrint = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.trFov)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trTime)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trAxisLength)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trThick)).BeginInit();
             this.SuspendLayout();
             // 
             // glControl1
@@ -58,6 +62,7 @@
             this.glControl1.Render += new System.EventHandler<OpenGL.GlControlEventArgs>(this.glControl1_Render);
             this.glControl1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.glControl1_KeyDown);
             this.glControl1.KeyUp += new System.Windows.Forms.KeyEventHandler(this.glControl1_KeyUp);
+            this.glControl1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseClick);
             this.glControl1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDoubleClick);
             this.glControl1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseDown);
             this.glControl1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseMove);
@@ -79,7 +84,7 @@
             // 
             // trFov
             // 
-            this.trFov.Location = new System.Drawing.Point(683, 107);
+            this.trFov.Location = new System.Drawing.Point(683, 220);
             this.trFov.Maximum = 160;
             this.trFov.Minimum = 30;
             this.trFov.Name = "trFov";
@@ -91,7 +96,7 @@
             // lblFov
             // 
             this.lblFov.AutoSize = true;
-            this.lblFov.Location = new System.Drawing.Point(692, 140);
+            this.lblFov.Location = new System.Drawing.Point(692, 253);
             this.lblFov.Name = "lblFov";
             this.lblFov.Size = new System.Drawing.Size(43, 12);
             this.lblFov.TabIndex = 3;
@@ -137,6 +142,7 @@
             this.ckBoneBindPose.TabIndex = 7;
             this.ckBoneBindPose.Text = "BindPose visible";
             this.ckBoneBindPose.UseVisualStyleBackColor = true;
+            this.ckBoneBindPose.CheckedChanged += new System.EventHandler(this.ckBoneBindPose_CheckedChanged);
             // 
             // cbAction
             // 
@@ -149,12 +155,45 @@
             this.cbAction.TabIndex = 11;
             this.cbAction.SelectedIndexChanged += new System.EventHandler(this.cbAction_SelectedIndexChanged);
             // 
+            // btnIKSolved
+            // 
+            this.btnIKSolved.Location = new System.Drawing.Point(694, 294);
+            this.btnIKSolved.Name = "btnIKSolved";
+            this.btnIKSolved.Size = new System.Drawing.Size(75, 36);
+            this.btnIKSolved.TabIndex = 12;
+            this.btnIKSolved.Text = "IKSolved";
+            this.btnIKSolved.UseVisualStyleBackColor = true;
+            this.btnIKSolved.Click += new System.EventHandler(this.btnIKSolved_Click);
+            // 
+            // trThick
+            // 
+            this.trThick.Location = new System.Drawing.Point(683, 92);
+            this.trThick.Maximum = 800;
+            this.trThick.Minimum = 10;
+            this.trThick.Name = "trThick";
+            this.trThick.Size = new System.Drawing.Size(226, 45);
+            this.trThick.TabIndex = 13;
+            this.trThick.Value = 30;
+            this.trThick.Scroll += new System.EventHandler(this.trThick_Scroll);
+            // 
+            // lbPrint
+            // 
+            this.lbPrint.AutoSize = true;
+            this.lbPrint.Location = new System.Drawing.Point(692, 354);
+            this.lbPrint.Name = "lbPrint";
+            this.lbPrint.Size = new System.Drawing.Size(49, 12);
+            this.lbPrint.TabIndex = 14;
+            this.lbPrint.Text = "LB Print";
+            // 
             // Form3D
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Control;
             this.ClientSize = new System.Drawing.Size(920, 590);
+            this.Controls.Add(this.lbPrint);
+            this.Controls.Add(this.trThick);
+            this.Controls.Add(this.btnIKSolved);
             this.Controls.Add(this.cbAction);
             this.Controls.Add(this.ckBoneBindPose);
             this.Controls.Add(this.trAxisLength);
@@ -173,6 +212,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.trFov)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trTime)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.trAxisLength)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.trThick)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -189,5 +229,8 @@
         private System.Windows.Forms.TrackBar trAxisLength;
         private System.Windows.Forms.CheckBox ckBoneBindPose;
         private System.Windows.Forms.ComboBox cbAction;
+        private System.Windows.Forms.Button btnIKSolved;
+        private System.Windows.Forms.TrackBar trThick;
+        private System.Windows.Forms.Label lbPrint;
     }
 }

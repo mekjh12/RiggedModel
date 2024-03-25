@@ -4,6 +4,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using System.Xml;
 
@@ -33,6 +34,15 @@ namespace LSystem.Animate
 
         public TexturedModel Model => _model;
 
+        public Animation DefaultAnimation
+        {
+            get
+            {
+                List<Animation> list = new List<Animation>(_animations.Values);
+                return list.Count > 0 ? list[0] : null;
+            }
+        }
+ 
         public Animation GetAnimation(string animationName)
         {
             return (_animations.ContainsKey(animationName))? _animations[animationName] : null;
@@ -42,11 +52,11 @@ namespace LSystem.Animate
         /// 생성자
         /// </summary>
         /// <param name="filename"></param>
-        public XmlDae(string filename)
+        public XmlDae(string filename, bool isLoadAnimation = true)
         {
             _filename = filename;
             _textures = new Dictionary<TextureType, Texture>();
-            _model = Load(filename);
+            _model = Load(filename, isLoadAnimation);
         }
 
         public string AddAction(string filename)
@@ -54,11 +64,12 @@ namespace LSystem.Animate
             XmlDocument xml = new XmlDocument();
             xml.Load(filename);
             string actionName = Path.GetFileNameWithoutExtension(filename);
+            if (_animations == null) _animations = new Dictionary<string, Animation>();
             LibraryAnimationFromDae(xml, actionName, ref _animations);
             return actionName;
         }
 
-        public TexturedModel Load(string filename)
+        public TexturedModel Load(string filename, bool isLoadAnimation = true)
         {
             XmlDocument xml = new XmlDocument();
             xml.Load(filename);
@@ -83,8 +94,11 @@ namespace LSystem.Animate
             }
 
             // (4) library_animations
-            if (_animations == null) _animations = new Dictionary<string, Animation>();
-            LibraryAnimations(xml, ref _animations);
+            if (isLoadAnimation)
+            {
+                if (_animations == null) _animations = new Dictionary<string, Animation>();
+                LibraryAnimations(xml, ref _animations);
+            }
 
             // (5) library_visual_scenes = bone hierarchy + rootBone
             _rootBone = LibraryVisualScenes(xml, boneNames, invBindPoses);
@@ -256,7 +270,8 @@ namespace LSystem.Animate
                     {
                         for (int i = 0; i < items.Length; i += 3)
                         {
-                            lstPositions.Add(new Vertex3f(1 * items[i], 1 * items[i + 1], 1 * items[i + 2]));
+                            Vertex3f pos = new Vertex3f(items[i], items[i + 1], items[i + 2]);
+                            lstPositions.Add(pos);
                         }
                     }
                     else if ("#" + sourcesId == normalName)
@@ -621,8 +636,7 @@ namespace LSystem.Animate
                 {
                     bone.Name = boneName;
                     bone.BindTransform = mat;
-                    if (_dicBoneIndex.ContainsKey(boneName))
-                        bone.Index = _dicBoneIndex[boneName];
+                    bone.Index = _dicBoneIndex.ContainsKey(boneName) ? _dicBoneIndex[boneName] : -1;
                 }
 
                 if (invBindPoses.ContainsKey(bone.Name))

@@ -17,6 +17,7 @@ namespace LSystem
         private Matrix4x4f _animatedTransform = Matrix4x4f.Identity;
         private Matrix4x4f _bindTransform = Matrix4x4f.Identity;
         private Matrix4x4f _inverseBindTransform = Matrix4x4f.Identity;
+        private Matrix4x4f _localAnimationTransform = Matrix4x4f.Identity;
 
         public bool IsLeaf => _children.Count == 0;
 
@@ -40,18 +41,36 @@ namespace LSystem
 
         public List<Bone> Childrens => _children;
 
+        /// <summary>
+        /// 캐릭터공간에서의 변환행렬
+        /// </summary>
         public Matrix4x4f AnimatedTransform 
         {
             get => _animatedTransform;
             set => _animatedTransform = value;
         }
 
+        /// <summary>
+        /// 뼈공간에서의 변환행렬
+        /// </summary>
+        public Matrix4x4f LocalAnimationTransform
+        {
+            get => _localAnimationTransform;
+            set => _localAnimationTransform = value;
+        }
+
+        /// <summary>
+        /// 바인딩포즈의 뼈공간의 역행렬
+        /// </summary>
         public Matrix4x4f InverseBindTransform
         {
             get => _inverseBindTransform;
             set => _inverseBindTransform = value;
         }
 
+        /// <summary>
+        /// 바인딩 포즈의 변환행렬
+        /// </summary>
         public Matrix4x4f BindTransform
         {
             get => _bindTransform;

@@ -12,7 +12,7 @@ namespace LSystem
         public static RawModel3d Rect = Loader3d.LoadPlane();
         public static RawModel3d Axis = Loader3d.LoadAxis(1);
 
-        public static void RenderLocalAxis(StaticShader shader, Camera camera, float size, Matrix4x4f? localModel = null,  bool isDepthTest = false)
+        public static void RenderLocalAxis(StaticShader shader, Camera camera, float size, float thick,  Matrix4x4f? localModel = null,  bool isDepthTest = false)
         {
             if (localModel == null) localModel = Matrix4x4f.Identity;
 
@@ -35,7 +35,7 @@ namespace LSystem
             Matrix4x4f mat = (Matrix4x4f)localModel;
             Matrix4x4f scaled = Matrix4x4f.Scaled(size, size, size);
 
-            Gl.LineWidth(1.0f);
+            Gl.LineWidth(thick);
             shader.LoadModelMatrix(mat * scaled);
             Gl.DrawArrays(PrimitiveType.Lines, 0, 6);
 
@@ -51,6 +51,34 @@ namespace LSystem
             else
                 Gl.Enable(EnableCap.DepthTest);
         }
+
+        public static void RenderPoint(StaticShader shader, Vertex3f point,  Camera camera, Vertex4f color, float size = 0.1f)
+        {
+            Gl.Disable(EnableCap.DepthTest);
+            shader.Bind();
+
+            shader.LoadProjMatrix(camera.ProjectiveMatrix);
+            shader.LoadViewMatrix(camera.ViewMatrix);
+
+            Gl.BindVertexArray(Sphere.VAO);
+            Gl.EnableVertexAttribArray(0);
+
+            shader.LoadIsTextured(false);
+
+            shader.LoadModelMatrix(Matrix4x4f.Translated(point.x, point.y, point.z) * Matrix4x4f.Scaled(size, size, size));
+            shader.LoadObjectColor(color);
+            Gl.DrawArrays(PrimitiveType.Triangles, 0, Sphere.VertexCount);
+
+            Gl.DisableVertexAttribArray(0);
+            Gl.BindVertexArray(0);
+
+            shader.Unbind();
+            Gl.Enable(EnableCap.DepthTest);
+            shader.LoadIsTextured(true);
+
+        }
+
+
 
         public static void RenderAxis(StaticShader shader, Camera camera)
         {

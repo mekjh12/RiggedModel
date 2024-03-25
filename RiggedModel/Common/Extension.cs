@@ -57,6 +57,11 @@ namespace LSystem
             return new Vertex3f(vec.x, vec.y, vec.z);
         }
 
+        public static float Norm(this Vertex3f vec)
+        {
+            return (float)Math.Sqrt(vec.Dot(vec));
+        }
+
         public static Matrix4x4f Scaled(Vertex3f scale)
         {
             Matrix4x4f mat = Matrix4x4f.Identity;

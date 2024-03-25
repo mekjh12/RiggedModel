@@ -1,5 +1,7 @@
-﻿using LSystem.Animate;
+﻿using Assimp;
+using LSystem.Animate;
 using OpenGL;
+using System;
 using System.Collections.Generic;
 
 namespace LSystem
@@ -13,6 +15,23 @@ namespace LSystem
         Matrix4x4f _rootBoneTransform;
         Matrix4x4f _bindShapeMatrix;
         XmlDae _xmlDae;
+
+        public Bone GetBone(string boneName)
+        {
+            Bone bone = _rootBone;
+            Stack<Bone> stack = new Stack<Bone>();
+            stack.Push(bone);
+            while (stack.Count > 0)
+            {
+                Bone b = stack.Pop();
+                if (boneName == b.Name)
+                {
+                    return b;
+                }
+                foreach (Bone childBone in b.Childrens) stack.Push(childBone);
+            }
+            return null;
+        }
 
         /// <summary>
         /// 
@@ -70,6 +89,7 @@ namespace LSystem
         public void SetAnimation(string actionName)
         {
             Animation animation = _xmlDae.GetAnimation(actionName);
+            if (animation == null) animation = _xmlDae.DefaultAnimation;
             _animator.SetAnimation(animation);
         }
 
@@ -96,18 +116,11 @@ namespace LSystem
                 stack.Push(_rootBone.Childrens[0]);
                 while(stack.Count > 0)
                 {
-                    Bone joint = stack.Pop();
-                    if (joint.Index >= 0)
-                    {
-                        jointMatrices[joint.Index] = joint.AnimatedTransform * joint.InverseBindTransform;
-                    }
-                    foreach (Bone j in joint.Childrens) stack.Push(j);
+                    Bone bone = stack.Pop();
+                    if (bone.Index >= 0)
+                        jointMatrices[bone.Index] = bone.AnimatedTransform * bone.InverseBindTransform;
+                    foreach (Bone j in bone.Childrens) stack.Push(j);
                 }
-
-                // 이유를 찾지 못하였지만 최상위 bone의 수정이 필요하여~!
-                Bone rbone = _rootBone.Childrens[0];
-                jointMatrices[0] = rbone.AnimatedTransform * rbone.InverseBindTransform;
-                
                 return jointMatrices;
             }
         }
@@ -125,7 +138,7 @@ namespace LSystem
         }
 
         /// <summary>
-        /// * 뼈들의 캐릭터 공간에서의 애니메이션 포즈행렬을 가져온다.<br/>
+        /// * 애니매이션에서 뼈들의 뼈공간 ==> 캐릭터 공간으로의 변환 행렬<br/>
         /// * 뼈들의 포즈를 렌더링하기 위하여 사용할 수 있다.<br/>
         /// </summary>
         public Matrix4x4f[] BoneAnimationTransforms
@@ -135,20 +148,14 @@ namespace LSystem
                 Matrix4x4f[] jointMatrices = new Matrix4x4f[_jointCount];
                 Stack<Bone> stack = new Stack<Bone>();
                 stack.Push(_rootBone);
+
                 while (stack.Count > 0)
                 {
-                    Bone joint = stack.Pop();
-                    if (joint.Index >= 0)
-                    {
-                        jointMatrices[joint.Index] = joint.AnimatedTransform;
-                    }
-                    foreach (Bone j in joint.Childrens) stack.Push(j);
+                    Bone bone = stack.Pop();
+                    if (bone.Index >= 0)
+                        jointMatrices[bone.Index] = bone.AnimatedTransform;
+                    foreach (Bone j in bone.Childrens) stack.Push(j);
                 }
-
-                // 이유를 찾지 못하였지만 최상위 hipBone의 수정이 필요하여~!
-                Bone rbone = _rootBone.Childrens[0];
-                jointMatrices[0] = rbone.AnimatedTransform;
-
                 return jointMatrices;
             }
         }
@@ -167,7 +174,10 @@ namespace LSystem
                 while (stack.Count > 0)
                 {
                     Bone bone = stack.Pop();
-                    jointMatrices[bone.Index] = bone.InverseBindTransform;
+                    if (bone.Index >= 0)
+                    {
+                        jointMatrices[bone.Index] = bone.InverseBindTransform;
+                    }
                     foreach (Bone j in bone.Childrens) stack.Push(j);
                 }
                 return jointMatrices;
