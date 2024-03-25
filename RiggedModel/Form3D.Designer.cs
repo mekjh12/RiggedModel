@@ -60,6 +60,7 @@
             this.glControl1.StencilBits = ((uint)(8u));
             this.glControl1.TabIndex = 0;
             this.glControl1.Render += new System.EventHandler<OpenGL.GlControlEventArgs>(this.glControl1_Render);
+            this.glControl1.Load += new System.EventHandler(this.glControl1_Load);
             this.glControl1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.glControl1_KeyDown);
             this.glControl1.KeyUp += new System.Windows.Forms.KeyEventHandler(this.glControl1_KeyUp);
             this.glControl1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.glControl1_MouseClick);
@@ -125,7 +126,7 @@
             // trAxisLength
             // 
             this.trAxisLength.Location = new System.Drawing.Point(682, 56);
-            this.trAxisLength.Maximum = 300;
+            this.trAxisLength.Maximum = 3000;
             this.trAxisLength.Minimum = 10;
             this.trAxisLength.Name = "trAxisLength";
             this.trAxisLength.Size = new System.Drawing.Size(226, 45);

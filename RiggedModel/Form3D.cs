@@ -28,7 +28,7 @@ namespace LSystem
         bool _isDraged = false;
         bool _isShifted = false;
 
-        Vertex3f _point;
+        Vertex3f[] _point;
         Vertex3f _ikPoint;
 
         enum RenderingMode { Animation, BoneWeight, Static, None, Count };
@@ -105,8 +105,8 @@ namespace LSystem
 
                 _aniModel.Update(deltaTime);
                 Matrix4x4f poseRootMatrix = _aniModel.RootBoneTransform * _aniModel.BindShapeMatrix;
-                Bone bone = _aniModel.GetBone("mixamorig_LeftHand");
-                _point = Kinetics.IKSolved(_ikPoint, bone, 4, 1);
+                Bone bone = _aniModel.GetBone("mixamorig_LeftToeBase");
+                _point = Kinetics.IKSolved2(_ikPoint, bone, 3, 100);
 
                 Entity entity = entities.Count > 0 ? entities[0] : null;
                 if (Keyboard.IsKeyDown(Key.D1)) entity.Roll(1);
@@ -162,7 +162,8 @@ namespace LSystem
                         Renderer.RenderLocalAxis(_shader, camera, size: _axisLength, thick: _drawThick, jointTransform);
                 }
 
-                Renderer.RenderPoint(_shader, _point, camera, new Vertex4f(1, 0, 0, 1), size: 0.02f);
+                for (int i = 0; i < _point.Length; i++)
+                    Renderer.RenderPoint(_shader, _point[i], camera, new Vertex4f(1, 0, 0, 1), size: 0.02f);
                 Renderer.RenderPoint(_shader, _ikPoint, camera, new Vertex4f(1, 1, 0, 1), size: 0.02f);
             };
         }
@@ -256,6 +257,12 @@ namespace LSystem
         private void glControl1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
         {
             _isDraged = true;
+            if (e.Button == MouseButtons.Left)
+            {
+                Camera camera = _gameLoop.Camera;
+                _ikPoint = Picker3d.PickUpPoint(camera, e.X, e.Y, glControl1.Width, glControl1.Height);
+                this.lbPrint.Text = _ikPoint.ToString();
+            }
         }
 
         private void glControl1_MouseUp(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -333,9 +340,12 @@ namespace LSystem
 
         private void glControl1_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
         {
-            Camera camera = _gameLoop.Camera;
-            _ikPoint = Picker3d.PickUpPoint(camera, e.X, e.Y, glControl1.Width, glControl1.Height);
-            this.lbPrint.Text = _ikPoint.ToString();
+            
+        }
+
+        private void glControl1_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
