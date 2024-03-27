@@ -86,7 +86,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Animate\AniModel.cs" />
-    <Compile Include="Animate\Animation.cs" />
+    <Compile Include="Animate\Motion.cs" />
     <Compile Include="Animate\Animator.cs" />
     <Compile Include="Animate\ArmaturePose.cs" />
     <Compile Include="Animate\Bone.cs" />

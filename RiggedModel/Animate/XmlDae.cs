@@ -1,11 +1,8 @@
 ﻿using Assimp;
 using OpenGL;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Windows.Forms;
 using System.Xml;
 
 namespace LSystem.Animate
@@ -15,7 +12,7 @@ namespace LSystem.Animate
         string _filename; // dae
         string _diffuseFileName;
         
-        Dictionary<string, Animation> _animations;
+        Dictionary<string, Motion> _motions;
         TexturedModel _model;
         RawModel3d _rawModel;
         Bone _rootBone;
@@ -34,18 +31,18 @@ namespace LSystem.Animate
 
         public TexturedModel Model => _model;
 
-        public Animation DefaultAnimation
+        public Motion DefaultMotion
         {
             get
             {
-                List<Animation> list = new List<Animation>(_animations.Values);
+                List<Motion> list = new List<Motion>(_motions.Values);
                 return list.Count > 0 ? list[0] : null;
             }
         }
  
-        public Animation GetAnimation(string animationName)
+        public Motion GetAnimation(string animationName)
         {
-            return (_animations.ContainsKey(animationName))? _animations[animationName] : null;
+            return (_motions.ContainsKey(animationName))? _motions[animationName] : null;
         }
 
         /// <summary>
@@ -64,8 +61,8 @@ namespace LSystem.Animate
             XmlDocument xml = new XmlDocument();
             xml.Load(filename);
             string actionName = Path.GetFileNameWithoutExtension(filename);
-            if (_animations == null) _animations = new Dictionary<string, Animation>();
-            LibraryAnimationFromDae(xml, actionName, ref _animations);
+            if (_motions == null) _motions = new Dictionary<string, Motion>();
+            LibraryAnimationFromDae(xml, actionName, ref _motions);
             return actionName;
         }
 
@@ -96,8 +93,8 @@ namespace LSystem.Animate
             // (4) library_animations
             if (isLoadAnimation)
             {
-                if (_animations == null) _animations = new Dictionary<string, Animation>();
-                LibraryAnimations(xml, ref _animations);
+                if (_motions == null) _motions = new Dictionary<string, Motion>();
+                LibraryAnimations(xml, ref _motions);
             }
 
             // (5) library_visual_scenes = bone hierarchy + rootBone
@@ -463,7 +460,7 @@ namespace LSystem.Animate
             }
         }
 
-        private void LibraryAnimations(XmlDocument xml, ref Dictionary<string, Animation> animations)
+        private void LibraryAnimations(XmlDocument xml, ref Dictionary<string, Motion> animations)
         {
             XmlNodeList libraryAnimations = xml.GetElementsByTagName("library_animations");
             if (libraryAnimations.Count == 0)
@@ -559,7 +556,7 @@ namespace LSystem.Animate
                     ani.Add(boneName, keyframe);
                 }
 
-                Animation animation = new Animation(actionName, maxTimeLength);
+                Motion animation = new Motion(actionName, maxTimeLength);
                 if (maxTimeLength > 0)
                 {
                     foreach (KeyValuePair<string, Dictionary<float, Matrix4x4f>> item in ani)
@@ -666,7 +663,7 @@ namespace LSystem.Animate
         /// </summary>
         /// <param name="xml"></param>
         /// <param name="animations"></param>
-        private void LibraryAnimationFromDae(XmlDocument xml, string actionName, ref Dictionary<string, Animation> animations)
+        private void LibraryAnimationFromDae(XmlDocument xml, string actionName, ref Dictionary<string, Motion> animations)
         {
             XmlNodeList libraryAnimations = xml.GetElementsByTagName("library_animations");
             if (libraryAnimations.Count == 0)
@@ -758,7 +755,7 @@ namespace LSystem.Animate
                 ani.Add(boneName, keyframe);
             }
 
-            Animation animation = new Animation(actionName, maxTimeLength);
+            Motion animation = new Motion(actionName, maxTimeLength);
             if (maxTimeLength > 0)
             {
                 foreach (KeyValuePair<string, Dictionary<float, Matrix4x4f>> item in ani)

@@ -55,7 +55,7 @@ namespace LSystem
         /// <summary>
         /// 
         /// </summary>
-        public float AnimationTime => _animator.AnimationTime;
+        public float MotionTime => _animator.MotionTime;
 
         /// <summary>
         /// 
@@ -86,11 +86,11 @@ namespace LSystem
         /// 
         /// </summary>
         /// <param name="actionName"></param>
-        public void SetAnimation(string actionName)
+        public void SetMotion(string actionName)
         {
-            Animation animation = _xmlDae.GetAnimation(actionName);
-            if (animation == null) animation = _xmlDae.DefaultAnimation;
-            _animator.SetAnimation(animation);
+            Motion motion = _xmlDae.GetAnimation(actionName);
+            if (motion == null) motion = _xmlDae.DefaultMotion;
+            _animator.SetMotion(motion);
         }
 
         /// <summary>

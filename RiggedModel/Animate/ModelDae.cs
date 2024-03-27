@@ -30,8 +30,8 @@ namespace LSystem
         /// <summary>
         /// ChildIndex -> ParentIndex
         /// </summary>
-        Dictionary<int, int> _skeletonHierarchy = new Dictionary<int, int>(); 
-        Animation _animation;
+        Dictionary<int, int> _skeletonHierarchy = new Dictionary<int, int>();
+        Motion _animation;
         Matrix4x4f _rootMatrix4x4;
 
         public Matrix4x4f RootMatrix4x4 => _rootMatrix4x4;
@@ -44,7 +44,7 @@ namespace LSystem
 
         public Bone RootBone => _rootJoint;
 
-        public Animation Animation => _animation;
+        public Motion Animation => _animation;
 
         public int BoneCount => _boneOffsetMatrices.Count;
 
@@ -229,7 +229,7 @@ namespace LSystem
             {
                 // 애니메이션을 로드한다.
                 string animationName = ani.Name;
-                _animation = new Animation(animationName, (float)ani.DurationInTicks);
+                _animation = new Motion(animationName, (float)ani.DurationInTicks);
 
                 // 시간키를 모두 읽어와 keyframe을 만든다. 
                 if (ani.HasNodeAnimations)

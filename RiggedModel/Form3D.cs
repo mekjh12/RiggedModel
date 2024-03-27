@@ -3,10 +3,8 @@ using OpenGL;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Input;
-using static Assimp.Metadata;
 
 namespace LSystem
 {
@@ -62,7 +60,7 @@ namespace LSystem
             daeEntity.IsAxisVisible = true;
 
             _aniModel = new AniModel(daeEntity, xmlDae);
-            _aniModel.SetAnimation(xmlDae.DefaultAnimation.Name);
+            _aniModel.SetMotion(xmlDae.DefaultMotion.Name);
 
             // 설정 읽어오기
             // -------------------------------------------------------------------------------------------------------
@@ -86,7 +84,7 @@ namespace LSystem
             _gameLoop.Camera.FOV = fov;
             this.trFov.Value = (int)fov;
             this.lblFov.Text = $"Fov={fov}";
-            this.trTime.Maximum = (int)_aniModel.Animator.CurrentAnimation.Length * 100;
+            this.trTime.Maximum = (int)_aniModel.Animator.CurrentMotion.Length * 100;
             this.trTime.Minimum = 0;
             this.trAxisLength.Value = (int)(_axisLength * 10.0f);
 
@@ -105,8 +103,8 @@ namespace LSystem
 
                 _aniModel.Update(deltaTime);
                 Matrix4x4f poseRootMatrix = _aniModel.RootBoneTransform * _aniModel.BindShapeMatrix;
-                Bone bone = _aniModel.GetBone("mixamorig_LeftToeBase");
-                _point = Kinetics.IKSolved2(_ikPoint, bone, 3, 100);
+                Bone bone = _aniModel.GetBone("mixamorig_LeftHand_end");
+                _point = Kinetics.IKSolvedInv(_ikPoint, bone, 3, 500);
 
                 Entity entity = entities.Count > 0 ? entities[0] : null;
                 if (Keyboard.IsKeyDown(Key.D1)) entity.Roll(1);
@@ -118,7 +116,7 @@ namespace LSystem
 
                 OrbitCamera camera = _gameLoop.Camera as OrbitCamera;
                 this.Text = $"{FramePerSecond.FPS}fps, t={FramePerSecond.GlobalTick} p={camera.Position}, distance={camera.Distance}";
-                this.trTime.Value = (int)(_aniModel.AnimationTime * 100).Clamp(0, this.trTime.Maximum);
+                this.trTime.Value = (int)(_aniModel.MotionTime * 100).Clamp(0, this.trTime.Maximum);
             };
 
             _gameLoop.RenderFrame = (deltaTime) =>
@@ -303,7 +301,7 @@ namespace LSystem
 
         private void trTime_ValueChanged(object sender, EventArgs e)
         {
-            lblTime.Text = $"Time={_aniModel.Animator.AnimationTime}s";
+            lblTime.Text = $"Time={_aniModel.Animator.MotionTime}s";
         }
 
         private void glControl1_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
@@ -319,8 +317,8 @@ namespace LSystem
 
         private void cbAction_SelectedIndexChanged(object sender, EventArgs e)
         {
-            this.trTime.Maximum = (int)_aniModel.Animator.CurrentAnimation.Length * 100;
-            this.trTime.Minimum = 0; _aniModel.SetAnimation(cbAction.Text);
+            this.trTime.Maximum = (int)_aniModel.Animator.CurrentMotion.Length * 100;
+            this.trTime.Minimum = 0; _aniModel.SetMotion(cbAction.Text);
         }
 
         private void btnIKSolved_Click(object sender, EventArgs e)

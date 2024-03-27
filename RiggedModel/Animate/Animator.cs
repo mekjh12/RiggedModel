@@ -7,13 +7,13 @@ namespace LSystem
     class Animator
     {
         AniModel _animatedModel;
-        Animation _currentAnimation;
-        float _animationTime = 0.0f;
+        Motion _currentMotion;
+        float _motionTime = 0.0f;
         bool _isPlaying = true;
 
-        public Animation CurrentAnimation => _currentAnimation;
+        public Motion CurrentMotion => _currentMotion;
 
-        public float AnimationTime => _animationTime;
+        public float MotionTime => _motionTime;
 
         /// <summary>
         /// 생성자
@@ -28,10 +28,10 @@ namespace LSystem
         /// 애니메이션을 지정한다.
         /// </summary>
         /// <param name="animation"></param>
-        public void SetAnimation(Animation animation)
+        public void SetMotion(Motion motion)
         {
-            _animationTime = 0;
-            _currentAnimation = animation;
+            _motionTime = 0;
+            _currentMotion = motion;
         }
 
         public void Play()
@@ -51,13 +51,13 @@ namespace LSystem
 
         public void Update(float deltaTime)
         {
-            if (_currentAnimation == null) return;
+            if (_currentMotion == null) return;
 
             // 애니메이션 시간을 업데이트한다.
             if (_isPlaying)
             {
-                _animationTime += deltaTime;
-                _animationTime = _animationTime % _currentAnimation.Length;
+                _motionTime += deltaTime;
+                _motionTime = _motionTime % _currentMotion.Length;
             }
 
             // 키프레임으로부터 현재의 로컬포즈행렬을 가져온다.(bone name, mat4x4f)
@@ -95,22 +95,22 @@ namespace LSystem
         private Dictionary<string, Matrix4x4f> CalculateCurrentAnimationPose()
         {
             // 현재 시간에서 가장 근접한 사이의 두 개의 프레임을 가져온다.
-            KeyFrame previousFrame = _currentAnimation.FirstFrame; 
-            KeyFrame nextFrame = _currentAnimation.FirstFrame;
-            float firstTime = _currentAnimation.FirstFrame.TimeStamp;
-            for (int i = 1; i < _currentAnimation.KeyFrameCount; i++)
+            KeyFrame previousFrame = _currentMotion.FirstFrame; 
+            KeyFrame nextFrame = _currentMotion.FirstFrame;
+            float firstTime = _currentMotion.FirstFrame.TimeStamp;
+            for (int i = 1; i < _currentMotion.KeyFrameCount; i++)
             {
-                nextFrame = _currentAnimation.Frame(i);
-                if (nextFrame.TimeStamp >= _animationTime - firstTime)
+                nextFrame = _currentMotion.Frame(i);
+                if (nextFrame.TimeStamp >= _motionTime - firstTime)
                 {
                     break;
                 }
-                previousFrame = _currentAnimation.Frame(i);
+                previousFrame = _currentMotion.Frame(i);
             }
 
             // 현재 진행률을 계산한다.
             float totalTime = nextFrame.TimeStamp - previousFrame.TimeStamp;
-            float currentTime = _animationTime - previousFrame.TimeStamp;
+            float currentTime = _motionTime - previousFrame.TimeStamp;
             float progression = currentTime / totalTime;
 
             // 두 키프레임 사이의 보간된 포즈를 딕셔러리로 가져온다.

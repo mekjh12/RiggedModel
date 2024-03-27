@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace LSystem
 {
-    public class Animation
+    public class Motion
     {
         private string _animationName;
         private float _length;
@@ -17,7 +17,7 @@ namespace LSystem
 
         public int KeyFrameCount => _keyframes.Count;
 
-        public Animation(string name, float lengthInSeconds)
+        public Motion(string name, float lengthInSeconds)
         {
             _animationName = name;
             _length = lengthInSeconds;
