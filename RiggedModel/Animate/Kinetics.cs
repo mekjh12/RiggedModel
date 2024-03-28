@@ -29,7 +29,7 @@ namespace LSystem.Animate
         }
         #endregion
 
-        private static void Rotate(Vertex3f grabTarget, Bone bone, Vertex3f endTarget)
+        public static void IKBoneRotate(Vertex3f grabTarget, Bone bone, Vertex3f endTarget)
         {
             Vertex3f G = grabTarget;
             Vertex3f T = endTarget; // bone.AnimatedTransform.Column3.Vertex3f();
@@ -47,19 +47,19 @@ namespace LSystem.Animate
             q.Normalize();
             Matrix4x4f Mq = ((Matrix4x4f)q);
 
-            Bone Parent = bone.Parent;
+            Bone parentBone = bone.Parent;
 
-            Vertex4f p = Parent.AnimatedTransform.Column3;
+            Vertex4f p = parentBone.AnimatedTransform.Column3;
 
-            Parent.AnimatedTransform = Mq * Parent.AnimatedTransform;
-            Matrix4x4f m = Matrix4x4f.Translated(p.x, p.y, p.z) * Parent.AnimatedTransform;
+            parentBone.AnimatedTransform = Mq * parentBone.AnimatedTransform;
+            Matrix4x4f m = Matrix4x4f.Translated(p.x, p.y, p.z) * parentBone.AnimatedTransform;
             m[3, 0] = p.x;
             m[3, 1] = p.y;
             m[3, 2] = p.z;
-            Parent.AnimatedTransform = m;
+            parentBone.AnimatedTransform = m;
 
             Stack<Bone> stack = new Stack<Bone>();
-            foreach (Bone child in Parent.Childrens) stack.Push(child);
+            foreach (Bone child in parentBone.Childrens) stack.Push(child);
             while (stack.Count > 0)
             {
                 Bone b = stack.Pop();
@@ -114,67 +114,14 @@ namespace LSystem.Animate
                 // 최말단뼈부터 시작하여 최상위 뼈까지 회전을 적용한다.
                 for (int i = 0; i < N; i++)
                 {
-                    Vertex3f T = Bn[0].AnimatedTransform.Column3.Vertex3f();
+                    Vertex3f T = Bn[0].PivotPosition;
                     err = (T - G).Norm();
-                    Rotate(G, Bn[i], T);
+                    IKBoneRotate(G, Bn[i], T);
                 }
 
                 // 최종적으로 최말단뼈의 회전을 적용한다.
                 Vertex3f T0 = Bn[0].AnimatedTransform.Column3.Vertex3f();
-                Rotate(G, Bn[0], T0);
-
-                iter++;
-            }
-
-            Console.WriteLine($"{iter}회 에러={err}");
-            List<Vertex3f> vertices = new List<Vertex3f>();
-            vertices.Add(bone.AnimatedTransform.Column3.Vertex3f());
-            return vertices.ToArray();
-        }
-
-
-        public static Vertex3f[] IKSolvedInv(Vertex3f grabTarget, Bone bone, int chainLength = 2, int iternations = 10, float epsilon = 0.05f)
-        {
-            Vertex3f G = grabTarget;
-
-            // 말단뼈로부터 최상위 뼈까지 리스트를 만들고 Chain Length를 구함.
-            List<Bone> bones = new List<Bone>();
-            Bone parent = bone;
-            bones.Add(parent);
-            while (parent.Parent != null)
-            {
-                bones.Add(parent.Parent);
-                parent = parent.Parent;
-            }
-
-            // 가능한 Chain Length
-            int rootChainLength = bones.Count;
-            int N = Math.Min(chainLength, rootChainLength);
-
-            // 뼈의 리스트 (말단의 뼈로부터 최상위 뼈로의 순서로)
-            // 0번째가 말단뼈 --> ... --> N-1이 최상위 뼈
-            Bone[] Bn = new Bone[N];
-
-            // [초기값 설정] 캐릭터 공간 행렬과 뼈 공간 행렬을 만듦 
-            for (int i = 0; i < N; i++)
-            {
-                Bn[i] = bones[i];
-            }
-
-            // 반복횟수와 오차범위안에서 반복하여 최적의 해를 찾는다.
-            int iter = 0;
-            float err = float.MaxValue;
-
-            while (iter < iternations && err > epsilon)
-            {
-                // 최말단뼈부터 시작하여 최상위 뼈까지 회전을 적용한다.
-                for (int i = N - 1; i >= 0; i--)
-                {
-                    Vertex3f T = Bn[0].AnimatedTransform.Column3.Vertex3f();
-                    err = (T - G).Norm();
-                    Rotate(G, Bn[i], T);
-                }
-
+                IKBoneRotate(G, Bn[0], T0);
 
                 iter++;
             }

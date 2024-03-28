@@ -39,6 +39,8 @@ namespace LSystem
             set => _name = value;
         }
 
+        public Vertex3f PivotPosition => _animatedTransform.Column3.Vertex3f();
+
         public List<Bone> Childrens => _children;
 
         /// <summary>

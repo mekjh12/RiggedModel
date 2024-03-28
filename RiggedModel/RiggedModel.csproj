@@ -97,6 +97,9 @@
     <Compile Include="Animate\TextureStorage.cs" />
     <Compile Include="Animate\XmlDae.cs" />
     <Compile Include="Common\IniFile.cs" />
+    <Compile Include="CTrackBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Model\GpuLoader.cs" />
     <Compile Include="Picker3d.cs" />
     <Compile Include="Shader\BoneWeightShader.cs" />

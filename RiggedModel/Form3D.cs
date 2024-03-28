@@ -1,4 +1,5 @@
-﻿using LSystem.Animate;
+﻿using Assimp;
+using LSystem.Animate;
 using OpenGL;
 using System;
 using System.Collections.Generic;
@@ -25,9 +26,15 @@ namespace LSystem
         PolygonMode _polygonMode = PolygonMode.Fill;
         bool _isDraged = false;
         bool _isShifted = false;
+        bool _isIkApply = true;
 
         Vertex3f[] _point;
         Vertex3f _ikPoint;
+
+        CTrackBar trFov;
+        CTrackBar trAxisLength;
+        CTrackBar trAxisThick;
+        CTrackBar trTime;
 
         enum RenderingMode { Animation, BoneWeight, Static, None, Count };
         RenderingMode _renderingMode = RenderingMode.Animation;
@@ -35,6 +42,26 @@ namespace LSystem
         public Form3D()
         {
             InitializeComponent();
+
+            int margin = 5;
+
+            // 화면구성
+            // --------------------------------------------------------------------------------------
+            trFov = new CTrackBar("Fov", 20, 160, 1);
+            trFov.Location = new System.Drawing.Point(this.glControl1.Right + margin, this.ckBoneVisible.Bottom + margin);
+            this.Controls.Add(trFov);
+
+            trAxisLength = new CTrackBar("AxisLength", 1, 6000, 1);
+            trAxisLength.Location = new System.Drawing.Point(this.trFov.Left, this.trFov.Bottom + margin);
+            this.Controls.Add(trAxisLength);
+
+            trAxisThick = new CTrackBar("AxisThick", 1, 600, 1);
+            trAxisThick.Location = new System.Drawing.Point(this.trAxisLength.Left, this.trAxisLength.Bottom + margin);
+            this.Controls.Add(trAxisThick);
+
+            trTime = new CTrackBar("AxisThick", 1, 600, 1);
+            trTime.Location = new System.Drawing.Point(this.trAxisLength.Left, this.trAxisThick.Bottom + margin);
+            this.Controls.Add(trTime);
         }
 
         private void Form3D_Load(object sender, EventArgs e)
@@ -49,7 +76,7 @@ namespace LSystem
             _bwShader = new BoneWeightShader();
             entities = new List<Entity>();
 
-            xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\Guybrush_final.dae", isLoadAnimation: false);
+            xmlDae = new XmlDae(EngineLoop.PROJECT_PATH + "\\Res\\kaya.dae", isLoadAnimation: false); // Guybrush_final
             string[] files = Directory.GetFiles(EngineLoop.PROJECT_PATH + "\\Res\\Action\\");
             foreach (string fn in files)
                 this.cbAction.Items.Add(xmlDae.AddAction(fn));
@@ -82,11 +109,42 @@ namespace LSystem
             _gameLoop.Camera.CameraPitch = pitch;
             _gameLoop.Camera.CameraYaw = yaw;
             _gameLoop.Camera.FOV = fov;
+            
+            // 컨트롤 설정부
+            trFov.ValueChanged += (oo, ee) =>
+            {
+                Camera camera = _gameLoop.Camera;
+                camera.FOV = trFov.Value;
+                IniFile.WritePrivateProfileString("camera", "fov", camera.FOV);
+            };
+
+            trAxisLength.ValueChanged += (oo, ee) =>
+            {
+                _axisLength = trAxisLength.Value * 0.1f;
+                IniFile.WritePrivateProfileString("Rendering", "axisLength", _axisLength);
+            };
+
+            trAxisThick.ValueChanged += (oo, ee) =>
+            {
+                _drawThick = (float)trAxisThick.Value * 0.01f;
+                IniFile.WritePrivateProfileString("Rendering", "drawThick", _drawThick);
+            };
+
+            trTime.ValueChanged += (oo, ee) =>
+            {
+                trTime.ValueText = trTime.Value * 0.01f + "s";
+            };
+            
             this.trFov.Value = (int)fov;
-            this.lblFov.Text = $"Fov={fov}";
             this.trTime.Maximum = (int)_aniModel.Animator.CurrentMotion.Length * 100;
             this.trTime.Minimum = 0;
             this.trAxisLength.Value = (int)(_axisLength * 10.0f);
+            this.cbAction.SelectedIndex = 0;
+
+            trFov.Draw();
+            trAxisLength.Draw();
+            trAxisThick.Draw();
+            trTime.Draw();
 
             // ### 주요로직 ###
             _gameLoop.UpdateFrame = (deltaTime) =>
@@ -103,8 +161,14 @@ namespace LSystem
 
                 _aniModel.Update(deltaTime);
                 Matrix4x4f poseRootMatrix = _aniModel.RootBoneTransform * _aniModel.BindShapeMatrix;
-                Bone bone = _aniModel.GetBone("mixamorig_LeftHand_end");
-                _point = Kinetics.IKSolvedInv(_ikPoint, bone, 3, 500);
+
+                if (_isIkApply)
+                {
+                    Bone boneEnd = _aniModel.GetBone("mixamorig_LeftHand");
+                    Bone bonePivot = boneEnd.Parent.Parent;
+                    //_point = Kinetics.IKSolved(_ikPoint, bone, 3, 500);
+                    Kinetics.IKBoneRotate(_ikPoint, bonePivot, boneEnd.PivotPosition);
+                }
 
                 Entity entity = entities.Count > 0 ? entities[0] : null;
                 if (Keyboard.IsKeyDown(Key.D1)) entity.Roll(1);
@@ -114,9 +178,9 @@ namespace LSystem
                 if (Keyboard.IsKeyDown(Key.D5)) entity.Pitch(1);
                 if (Keyboard.IsKeyDown(Key.D6)) entity.Pitch(-1);
 
+                trTime.Value = (int)(_aniModel.MotionTime * 100.0f).Clamp(0, trTime.Maximum);
                 OrbitCamera camera = _gameLoop.Camera as OrbitCamera;
                 this.Text = $"{FramePerSecond.FPS}fps, t={FramePerSecond.GlobalTick} p={camera.Position}, distance={camera.Distance}";
-                this.trTime.Value = (int)(_aniModel.MotionTime * 100).Clamp(0, this.trTime.Maximum);
             };
 
             _gameLoop.RenderFrame = (deltaTime) =>
@@ -160,10 +224,14 @@ namespace LSystem
                         Renderer.RenderLocalAxis(_shader, camera, size: _axisLength, thick: _drawThick, jointTransform);
                 }
 
-                for (int i = 0; i < _point.Length; i++)
-                    Renderer.RenderPoint(_shader, _point[i], camera, new Vertex4f(1, 0, 0, 1), size: 0.02f);
-                Renderer.RenderPoint(_shader, _ikPoint, camera, new Vertex4f(1, 1, 0, 1), size: 0.02f);
+                if (_point != null)
+                {
+                    for (int i = 0; i < _point.Length; i++)
+                        Renderer.RenderPoint(_shader, _point[i], camera, new Vertex4f(1, 0, 0, 1), size: 0.02f);
+                    Renderer.RenderPoint(_shader, _ikPoint, camera, new Vertex4f(1, 1, 0, 1), size: 0.02f);
+                }
             };
+
         }
 
         private void glControl1_MouseWheel(object sender, System.Windows.Forms.MouseEventArgs e)
@@ -213,6 +281,10 @@ namespace LSystem
                     Application.Exit();
                 }
             }
+            else if (e.KeyCode == Keys.I)
+            {
+                _isIkApply = !_isIkApply;
+            }
             else if (e.KeyCode == Keys.F)
             {
                 _polygonMode++;
@@ -238,6 +310,35 @@ namespace LSystem
                 if (_renderingMode == RenderingMode.Count) _renderingMode = 0;
                 IniFile.WritePrivateProfileString("Rendering", "RenderingMode", (int)_renderingMode);
             }
+            else if (e.KeyCode == Keys.D3)
+            {
+                Bone bone = _aniModel.GetBone("mixamorig_LeftHand_end");
+                Vertex3f G = _ikPoint;
+
+                // 말단뼈로부터 최상위 뼈까지 리스트를 만들고 Chain Length를 구함.
+                List<Bone> bones = new List<Bone>();
+                Bone parent = bone;
+                bones.Add(parent);
+                while (parent.Parent != null)
+                {
+                    bones.Add(parent.Parent);
+                    parent = parent.Parent;
+                }
+
+                // 가능한 Chain Length
+                int rootChainLength = bones.Count;
+                int N = Math.Min(3, rootChainLength);
+
+                // 뼈의 리스트 (말단의 뼈로부터 최상위 뼈로의 순서로)
+                // 0번째가 말단뼈 --> ... --> N-1이 최상위 뼈
+                // [초기값 설정] 캐릭터 공간 행렬과 뼈 공간 행렬을 만듦 
+                Bone[] Bn = new Bone[N];
+                for (int i = 0; i < N; i++) Bn[i] = bones[i];
+
+                
+            }
+
+            //
         }
 
         private void ckBoneVisible_CheckedChanged(object sender, EventArgs e)
@@ -291,44 +392,17 @@ namespace LSystem
             Mouse.PrevPosition = new Vertex2i(e.X, e.Y);
         }
 
-        private void trFov_Scroll(object sender, EventArgs e)
-        {
-            Camera camera = _gameLoop.Camera;
-            camera.FOV = trFov.Value;
-            this.lblFov.Text = "Fov=" + camera.FOV;
-            IniFile.WritePrivateProfileString("camera", "fov", camera.FOV);
-        }
-
-        private void trTime_ValueChanged(object sender, EventArgs e)
-        {
-            lblTime.Text = $"Time={_aniModel.Animator.MotionTime}s";
-        }
-
         private void glControl1_KeyUp(object sender, System.Windows.Forms.KeyEventArgs e)
         {
             if (!e.Shift) _isShifted = false;
         }
 
-        private void trAxisLength_Scroll(object sender, EventArgs e)
-        {
-            _axisLength = trAxisLength.Value * 0.1f;
-            IniFile.WritePrivateProfileString("Rendering", "axisLength", _axisLength);
-        }
-
         private void cbAction_SelectedIndexChanged(object sender, EventArgs e)
         {
-            this.trTime.Maximum = (int)_aniModel.Animator.CurrentMotion.Length * 100;
-            this.trTime.Minimum = 0; _aniModel.SetMotion(cbAction.Text);
-        }
-
-        private void btnIKSolved_Click(object sender, EventArgs e)
-        {
-        }
-
-        private void trThick_Scroll(object sender, EventArgs e)
-        {
-            _drawThick = (float)trThick.Value / 100.0f;
-            IniFile.WritePrivateProfileString("Rendering", "drawThick", _drawThick);
+            trTime.Maximum = (int)(_aniModel.Animator.CurrentMotion.Length * 100.0f);
+            trTime.Minimum = 0;
+            _aniModel.SetMotion(cbAction.Text);
+            trTime.Draw();
         }
 
         private void ckBoneBindPose_CheckedChanged(object sender, EventArgs e)
@@ -336,14 +410,5 @@ namespace LSystem
             IniFile.WritePrivateProfileString("control", "isvisibleBindBone", this.ckBoneBindPose.Checked.ToString());
         }
 
-        private void glControl1_MouseClick(object sender, System.Windows.Forms.MouseEventArgs e)
-        {
-            
-        }
-
-        private void glControl1_Load(object sender, EventArgs e)
-        {
-
-        }
     }
 }
